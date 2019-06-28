@@ -60,13 +60,13 @@ CFG = attrdict(
         dialplan=attrdict(
             country="49",
             intl="00",
-            city="-",
+            city="FIXME",
             nat="0"
         ),
     )
     server=attrdict(
         # a simple HTTP server that publishes test results via JSON.
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=8080,
     ),
 
@@ -96,11 +96,12 @@ CFG = attrdict(
     # These modes only originate:
     # * ring: check for RINGING state (or ANSWER …) then hang up.
     # * try: check for ANSWER, optionally play a sound, then hang up.
+    # * fail: verify that this call is rejected.
     #
     # These modes only answer:
     # * wait: wait for an incoming call, let it ring, then hang up.
     # * answer: wait for an incoming call, answer it, optionally play a sound, then hang up.
     # * record: wait for an incoming call, answer it, record audio until the caller hangs up.
 
-    calls=[ ],
+    calls={ },
 )
