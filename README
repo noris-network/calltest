@@ -65,6 +65,8 @@ The configuration is a YAML file::
         retry: 300  # default, on error
         repeat: 600  # default, on success
         timeout: 30  # max call duration
+        ringtime: 0  # min time a call must be in RING state (outgoing),
+                     # time between RING and answering (incoming)
         url: "" # trigger
 
 The ``logging`` section is described in Python's documentation.
@@ -91,7 +93,6 @@ These parameters are used when answering a call:
 
 The ``prio`` value is used for avoiding deadlocks when acquiring links for
 bidirectional tests. If identical, the link's name is used.
-
 
 Calls
 +++++
@@ -152,6 +153,23 @@ TODO.
 
 Originate-only: call this number. It should answer. Play a sound, then
 hang up.
+
+fail
+----
+
+Originate-only: call this number. The call may not go through. It must be
+rejected before getting to RING state.
+
+TODO.
+
+timeout
+-------
+
+Originate-only: call this number. The call may not go through. It must be
+RINGing and then be rejected between ``ringtime`` and ``timeout``.
+
+TODO.
+
 
 wait
 ----
@@ -243,31 +261,28 @@ Asterisk configuration
 Asterisk needs to know how to direct incoming calls to the tester. This is
 typically done with a Stasis macro. This is for ``extensions.ael``::
 
-    macro calltest(typ) {
-        Stasis("calltest", ${typ});
+    macro calltest(link, nr) {
+        Stasis("calltest", ${link}, ${nr});
         Hangup();
         return;
     }
 
-(``"calltest"`` is the ``asterisk.app`` config parameter.)
+* calltest: the ``asterisk.app`` config parameter. 
+
+* link: the name of the link, in ``asterisk.link``.
+
+* nr: the incoming destination phone number.
 
 You'd call this macro from your context::
 
-    1234 => &calltest("foo");
-
-With ``extensions.conf`` the call would look like this::
-
-    exten => 1234,1,Gosub(calltest,s,1(foo))
-
-Don't try to write macros with Asterisk's old dial plan syntax, it's not
-worth the hassle.
+    1234 => &calltest("foo", ${EXTEN});
 
 If you want to route all incoming calls on a channel to this macro, use
 something like this context::
 
 context ext_bar {
-        s => &calltest(bar);
-        i => &calltest(bar);
+        s => &calltest(bar, "");
+        i => &calltest(bar, ${INVALID_EXTEN});
         h => Hangup();
 }
 
