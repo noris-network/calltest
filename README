@@ -1,0 +1,273 @@
+===========
+Call tester
+===========
+
+This program connects to an Asterisk server and performs call tests, i.e.
+it causes one channel to call another and verifies that the call worked.
+
+There's also a small JSON server built in that reports on the results and
+which can be used to trigger a test.
+
+Configuration
+=============
+
+The configuration is a YAML file::
+
+    logging:
+      disable_existing_loggers: false
+      formatters:
+        std: {class: calltest.util.TimeOnlyFormatter, format: '%(asctime)s %(levelname)s:%(name)s:%(message)s'}
+      handlers:
+        logfile: {class: logging.FileHandler, filename: test.log, formatter: std, level: DEBUG}
+        stderr: {class: logging.StreamHandler, formatter: std, level: DEBUG, stream: 'ext://sys.stderr'}
+      loggers:
+        asyncari: {level: INFO}
+      root:
+        handlers: [stderr]
+        level: ERROR
+      version: 1
+    
+    asterisk:
+      app: calltest
+      host: localhost
+      init_timeout: 5
+      port: 8088
+      ssl: false
+
+      username: asterisk # CHANGE ME
+      password: asterisk # CHANGE ME
+
+      dialplan:
+        country: "49"
+        city: "123" # CHANGE ME
+        intl: "00"
+        nat: "0"
+
+    server:
+      host: 127.0.0.1  # no security here: TODO
+      port: 8080
+
+    links: 
+      foo:
+        channel: "SIP/foo/{nr}"
+        number: "+49123456789"
+        prio: 0
+      bar:
+        channel: "SIP/bar/{nr}"
+        number: "+49987654321"
+        prio: 0
+
+    calls:
+      foobar:
+        src: foo
+        dst: bar
+        mode: dtmf
+        retry: 300  # default, on error
+        repeat: 600  # default, on success
+        timeout: 30  # max call duration
+        url: "" # trigger
+
+The ``logging`` section is described in Python's documentation.
+
+The ``asterisk`` section describes how to connect to your Asterisk server.
+
+``asterisk``, ``server`` and ``logging`` are default sections. In your
+config you only need to add or replace the values you care about,
+everything else will be defaulted in.
+
+Links
++++++
+
+``links`` contains the Asterisk channels that CallTest can use.
+
+These parameters are used when originating a call on the link:
+
+* channel: The dial string used to call out on this channel. ``{nr}`` is a
+  placeholder for the destination phone number.
+
+These parameters are used when answering a call:
+
+* number: The number to dial, when calling this link.
+
+The ``prio`` value is used for avoiding deadlocks when acquiring links for
+bidirectional tests. If identical, the link's name is used.
+
+
+Calls
++++++
+
+``calls`` contains a number of (named) tests.
+
+* src: the source link to use, i.e. to originate the call.
+
+* dst: the destination to use, i.e. to answer the call.
+
+* mode: How to perform a test. See below.
+
+* retry, repeat: seconds to delay until repeating a call, depending on
+  whether the previous attempt failed or succeeded.
+
+* timeout: Hard limit for a call's duration. If a call exceeds this,
+  it is terminated and the test fails.
+
+* url: for answer-only modes, you need a way to cause a call. For now this
+  is done by fetching the data at this URL.
+
+Modes
++++++
+
+You can configure how CallTest processes a call.
+
+dtmf
+----
+
+The answering channel sends a couple of DTMF tones. The originator then
+does the same thing. The codes must match.
+
+call
+----
+
+The answering channel will acknowledge that it's ringing, but then simply
+hang up.
+
+audio
+-----
+
+TODO.
+
+Like DTMF, but both send a sound file instead. The sounds are recorded.
+They should match, somewhat.
+
+ring
+----
+
+TODO.
+
+Originate-only: call this number. It should be RINGING. Then hang up.
+
+play
+----
+
+TODO.
+
+Originate-only: call this number. It should answer. Play a sound, then
+hang up.
+
+wait
+----
+
+TODO.
+
+Answer-only: wait for an incoming call, set it to RINGING, wait a few
+seconds, hang up.
+
+answer
+------
+
+TODO.
+
+Answer-only: wait for an incoming call, answer it, optionally play a sound,
+then hang up.
+
+record
+------
+
+TODO.
+
+Answer-only:  wait for an incoming call, answer it, optionally play a sound,
+then record incoming audio until the originator hangs up.
+
+
+Number format
++++++++++++++
+
+CallTest recognizes two kinds of phone numbers: site-local extensions, and
+everything else. CallTest distinguishes these by the initial '+'.
+
+Outgoing
+--------
+
+The outgoing Asterisk channel should be able to handle both kinds directly.
+If not, either drop-kick your phone provider, or write a "Local" channel
+that mangles the dialled number for you. For instance, if you need to drop
+the '+', use this macro::
+
+    context mangle {
+        _+! => { Dial(SIP/broken/${EXTEN:1}) }
+    }
+
+and then call ``Local/{nr}@mangle``. As another example, if you need to use
+local dial strings::
+
+    context mangle {
+        _X! => Dial(SIP/broken/${EXTEN});  // pass-thru for local extensions
+        _+49123! => Dial(SIP/broken/${EXTEN:6});
+        _+49! => Dial(SIP/broken/0${EXTEN:3});
+        _+! => Dial(SIP/broken/00${EXTEN:1});
+    }
+
+though you can probably get by with just the first and last line.
+
+Incoming
+--------
+
+CallTest will verify that, the caller's number on an incoming call matches
+the number in source link. If that number is prefixed with a '+', the
+caller's number is converted to international format and needs to match
+exactly. Otherwise, the source number must be at the end of the caller's.
+
+This ensures that there's no incoming nonsense, while acknowledging that
+site-local numbers often are not transmitted cleanly.
+
+If you need Asterisk to mangle the caller's number so that it looks sane
+enough for CallTest, add that to the ``calltest`` macro. For instance, to
+drop a leading zero::
+
+    macro calltest(typ) {
+        SET(cid=${CALLERID(num)})
+        switch(cid) {
+            pattern 0.:
+                set(CALLERID(num)=${cid:1});
+                break;
+            default:
+                break;
+        }
+        Stasis("calltest", ${typ});
+        Hangup();
+        return;
+    }
+
+Asterisk configuration
+++++++++++++++++++++++
+
+Asterisk needs to know how to direct incoming calls to the tester. This is
+typically done with a Stasis macro. This is for ``extensions.ael``::
+
+    macro calltest(typ) {
+        Stasis("calltest", ${typ});
+        Hangup();
+        return;
+    }
+
+(``"calltest"`` is the ``asterisk.app`` config parameter.)
+
+You'd call this macro from your context::
+
+    1234 => &calltest("foo");
+
+With ``extensions.conf`` the call would look like this::
+
+    exten => 1234,1,Gosub(calltest,s,1(foo))
+
+Don't try to write macros with Asterisk's old dial plan syntax, it's not
+worth the hassle.
+
+If you want to route all incoming calls on a channel to this macro, use
+something like this context::
+
+context ext_bar {
+        s => &calltest(bar);
+        i => &calltest(bar);
+        h => Hangup();
+}
+
