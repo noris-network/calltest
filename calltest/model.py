@@ -30,7 +30,7 @@ class Link:
         return self.name == other
 
     @property
-    def prio(self)
+    def prio(self):
         """Relative priority. Used for deadlock avoidance."""
         return (self._prio, self.name)
 
