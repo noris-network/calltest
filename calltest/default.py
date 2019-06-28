@@ -1,5 +1,5 @@
 """
-This module contains the default values for distkv configuration.
+This module contains the default values for calltest configuration.
 """
 
 from .util import attrdict
@@ -39,7 +39,7 @@ CFG = attrdict(
         },
         "formatters":{
             "std":{
-                "class":"distkv.util.TimeOnlyFormatter",
+                "class":"calltest.util.TimeOnlyFormatter",
                 "format":'%(asctime)s %(levelname)s:%(name)s:%(message)s',
             },
         },
@@ -63,7 +63,7 @@ CFG = attrdict(
             city="-",
             nat="0"
         ),
-    )
+    ),
     server=attrdict(
         # a simple HTTP server that publishes test results via JSON.
         host="0.0.0.0",
