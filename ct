@@ -4,7 +4,8 @@ __requires__ = 'calltest'
 import re
 import sys
 import os
-sys.path[0:0] = (".","../python-asyncari")
+#sys.path[0:0] = (".","../python-asyncari")
+sys.path[0:0] = (".",)
 
 try:
     from pkg_resources import load_entry_point
