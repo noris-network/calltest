@@ -19,7 +19,7 @@ async def wait_answered(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state == "Up")
 
 async def wait_ringing(chan_state):
-    await chan_state.channel.wait_for(lambda: chan_state.channel.state in ("Up", "Ringing"))
+    await chan_state.channel.wait_for(lambda: chan_state.channel.state in {"Up", "Ringing", "Ring"})
 
 class DTMFError(RuntimeError):
     def __init__(self, digit, dts):
