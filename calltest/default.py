@@ -19,34 +19,33 @@ CFG = attrdict(
     logging={ # a magic incantation
         "version":1,
         "loggers":{
-            "asyncserf":{"level":"INFO"},
+            "asyncari": {"level":"INFO"},
         },
         "root":{
-            "handlers":["stderr",],
+            "handlers": ["stderr",],
             "level":"INFO",
         },
-        "handlers":{
-            "logfile":{
+        "handlers": {
+            "logfile": {
                 "class":"logging.FileHandler",
                 "filename":"test.log",
                 "level":"DEBUG",
                 "formatter":"std",
             },
-            "stderr":{
+            "stderr": {
                 "class":"logging.StreamHandler",
                 "level":"DEBUG",
                 "formatter":"std",
                 "stream":"ext://sys.stderr",
             },
         },
-        "formatters":{
+        "formatters": {
             "std":{
                 "class":"calltest.util.TimeOnlyFormatter",
                 "format":'%(asctime)s %(levelname)s:%(name)s:%(message)s',
             },
         },
         "disable_existing_loggers":False,
-
     },
     asterisk=attrdict(
         # client: controls talking to the DistKV server
@@ -70,6 +69,7 @@ CFG = attrdict(
         # a simple HTTP server that publishes test results via JSON.
         host="127.0.0.1",
         port=8080,
+        prio=0,
     ),
 
     # maps app names to channels and phone numbers.
