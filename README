@@ -261,8 +261,8 @@ Asterisk configuration
 Asterisk needs to know how to direct incoming calls to the tester. This is
 typically done with a Stasis macro. This is for ``extensions.ael``::
 
-    macro calltest(link, nr) {
-        Stasis("calltest", ${link}, ${nr});
+    macro calltest(link,nr) {
+        Stasis(calltest,${link},${nr});
         Hangup();
         return;
     }
@@ -275,14 +275,19 @@ typically done with a Stasis macro. This is for ``extensions.ael``::
 
 You'd call this macro from your context::
 
-    1234 => &calltest("foo", ${EXTEN});
+    1234 => &calltest(foo,${EXTEN});
 
 If you want to route all incoming calls on a channel to this macro, use
 something like this context::
 
 context ext_bar {
-        s => &calltest(bar, "");
-        i => &calltest(bar, ${INVALID_EXTEN});
+        s => &calltest(bar,);
+        i => &calltest(bar,${INVALID_EXTEN});
         h => Hangup();
 }
+
+Warning::
+
+    These calls all have no spaces after the argument-separating commas.
+    This is important.
 
