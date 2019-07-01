@@ -39,7 +39,7 @@ def cmd():
         print("Aborted.", file=sys.stderr)
         pass
     except EnvironmentError as exc:
-        print(type(err).__name__ + ":", *err.args, file=sys.stderr)
+        print(type(exc).__name__ + ":", *exc.args, file=sys.stderr)
         sys.exit(1)
     except BaseException as exc:
         raise
