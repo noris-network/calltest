@@ -256,9 +256,15 @@ class BaseOutWorker(BaseWorker):
                 pass # do whatever else with it
 
         """
-        if dest_nr is None:
+        ep = self.call.src.channel
+        if dest_nr is None and self.call.dst is not None:
             dest_nr = self.call.dst.number
-        ep = self.call.src.channel.replace('{nr}', dest_nr)
+        if dest_nr is None:
+            if '{nr}' in ep:
+                raise ValueError("Need a destination (for the number)")
+            dest_nr=""
+        else:
+            ep = ep.replace('{nr}', dest_nr)
         oc = None
         self.out_logger.debug("Calling %s", ep)
 
