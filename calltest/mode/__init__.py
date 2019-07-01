@@ -199,7 +199,7 @@ class _InCall:
         return self
 
     @asynccontextmanager
-    async def get(self, state_factory=ChannelState, handle_answer=True, handle_ringing=True):
+    async def get(self, state_factory=ChannelState):
         """
         Wait for the incoming call, return the appropriate ChannelState.
 
