@@ -6,7 +6,8 @@ import importlib
 
 from contextlib import asynccontextmanager, AsyncExitStack
 
-from .util import attrdict
+from .util import attrdict, combine_dict
+from .default import DEFAULT
 
 class Link:
     def __init__(self, name, channel, number, prio=0, **kw):
@@ -53,7 +54,11 @@ async def locked_links(*locks):
 
 def gen_links(cfg):
     res = attrdict()
-    for k,v in cfg['links']:
+    default = cfg['links'][DEFAULT]
+    for k,v in cfg['links'].items():
+        if k == DEFAULT:
+            continue
+        v = combine_dict(v, default)
         l = Link(name=k, **v)
         res[k] = l
     return res
@@ -103,9 +108,13 @@ class Call:
 
 def gen_calls(links, cfg):
     res = attrdict()
-    for k,v in cfg['links']:
-        l = Link(links, name=k, **v)
-        res[k] = l
+    default = cfg['calls'][DEFAULT]
+    for k,v in cfg['calls'].items():
+        if k == DEFAULT:
+            continue
+        v = combine_dict(v, default)
+        c = Call(links, name=k, **v)
+        res[k] = c
     return res
 
 

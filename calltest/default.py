@@ -4,7 +4,7 @@ This module contains the default values for calltest configuration.
 
 from .util import attrdict
 
-__all__ = ["PORT", "CFG"]
+__all__ = ["PORT", "CFG", "DEFAULT"]
 
 ARI_PORT = 8088
 
@@ -12,6 +12,8 @@ ARI_PORT = 8088
 # configuration you use.
 # It is "complete" in the sense that DistKV will never die
 # due to a KeyError caused by a missing config value.
+
+DEFAULT = ":default:"
 
 CFG = attrdict(
     logging={ # a magic incantation
@@ -75,17 +77,14 @@ CFG = attrdict(
     #          channel="SIP/bar/{nr}",           # incoming: Stasis argument 1
     #          number="+49123456789"),
     # }
-    links={ },
+    links = {
+        DEFAULT: {
+            "channel": None,
+            "number": None,
+        },
+    },
 
     # list of named tests.
-    # "bar": attrdict(
-    #          retry=5*60,
-    #          repeat=10*60,
-    #          src="foo",     # link. Must be missing for answer tests.
-    #          dst="foo2",   # link. Must be missing for originate tests.
-    #          mode="dtmf",   # see below
-    #          timeout=30 # seconds
-    # )
     # The test will be repeated every 10 minutes when successful and
     # retried every 5 min when unsuccessful.
     # 
@@ -103,5 +102,14 @@ CFG = attrdict(
     # * answer: wait for an incoming call, answer it, optionally play a sound, then hang up.
     # * record: wait for an incoming call, answer it, record audio until the caller hangs up.
 
-    calls={ },
+    calls = {
+        DEFAULT: {
+            "retry": 5*60,
+            "repeat": 10*60,
+            "src": None,   # link. Must be missing for answer tests.
+            "dst": None,   # link. Must be missing for originate tests.
+            "mode": "dtmf",   # see below
+            "timeout": 30, # seconds
+        },
+    },
 )

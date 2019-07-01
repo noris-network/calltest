@@ -48,16 +48,26 @@ The configuration is a YAML file::
       port: 8080
 
     links: 
+      :default:
+        channel: none
+        number: none
+        prio: 0
       foo:
         channel: "SIP/foo/{nr}"
         number: "+49123456789"
-        prio: 0
       bar:
         channel: "SIP/bar/{nr}"
         number: "+49987654321"
-        prio: 0
 
     calls:
+      ':default:':
+        dst: null
+        mode: dtmf
+        repeat: 600
+        retry: 300
+        src: null
+        timeout: 30
+
       foobar:
         src: foo
         dst: bar
@@ -77,6 +87,7 @@ The ``asterisk`` section describes how to connect to your Asterisk server.
 config you only need to add or replace the values you care about,
 everything else will be defaulted in.
 
+
 Links
 +++++
 
@@ -93,6 +104,10 @@ These parameters are used when answering a call:
 
 The ``prio`` value is used for avoiding deadlocks when acquiring links for
 bidirectional tests. If identical, the link's name is used.
+
+The ':default:' values are applied to all other entries (unless overridden),
+which saves you from changing 999 identical entries.
+
 
 Calls
 +++++
@@ -113,6 +128,10 @@ Calls
 
 * url: for answer-only modes, you need a way to cause a call. For now this
   is done by fetching the data at this URL.
+
+The ':default:' values are applied to all other entries (unless overridden),
+which saves you from changing 999 identical entries.
+
 
 Modes
 +++++
