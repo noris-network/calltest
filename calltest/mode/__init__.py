@@ -284,8 +284,12 @@ class BaseOutWorker(BaseWorker):
                         if e.status_code != NOT_FOUND:
                             raise
 
-    async def connect_out(self, state, handle_answer=True):
-        if handle_answer:
+    async def connect_out(self, state, handle_answer=True, handle_ringing=False):
+        if handle_ringing:
+            ring_delay = self.call.delay.ring
+            await wait_ringing(state)
+            await anyio.sleep(ring_delay)
+        elif handle_answer:
             answer_delay = self.call.delay.answer
             await wait_answered(state)
             await anyio.sleep(answer_delay)
