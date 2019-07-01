@@ -23,7 +23,7 @@ class Worker(BaseDualWorker):
             async def run_in():
                 await self.connect_in(icm)
                 await sync1.wait()
-                await icm.channel.sendDTMF(dtmf=in_dtmf)
+                await icm.channel.sendDTMF(dtmf=in_dtmf, between=0.5)
                 await ExpectDTMF(icm, dtmf=out_dtmf, evt=sync2, may_repeat=self.call.dtmf.may_repeat)
                 await sync3.set()
 
@@ -31,7 +31,7 @@ class Worker(BaseDualWorker):
                 await self.connect_out(ocm)
                 await ExpectDTMF(ocm, dtmf=in_dtmf, evt=sync1, may_repeat=self.call.dtmf.may_repeat)
                 await sync2.wait()
-                await ocm.channel.sendDTMF(dtmf=out_dtmf)
+                await ocm.channel.sendDTMF(dtmf=out_dtmf, between=0.5)
                 await sync3.wait()
                 
             await icm.taskgroup.spawn(run_in)
