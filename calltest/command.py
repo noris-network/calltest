@@ -158,6 +158,15 @@ async def run(obj, checks, list):
 
 @main.command()
 @click.pass_obj
+async def server(obj):
+    """
+    Run a server with all checks.
+    """
+    from calltest.server import serve
+    await serve(obj.cfg, obj.calls)
+
+@main.command()
+@click.pass_obj
 async def dumpcfg(obj):
     """emit the current configuration as a YAML file."""
     import yaml

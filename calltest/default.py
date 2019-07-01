@@ -104,8 +104,12 @@ CFG = attrdict(
 
     calls = {
         DEFAULT: {
-            "retry": 5*60,
-            "repeat": 10*60,
+            "test": attrdict(  # options for daemon mode
+              retry= 5*60,  # when failed
+              repeat= 10*60,  # when succeeded
+              warn=1,  # enter WARN state after this many failures
+              fail=1,  # enter FAIL state after this many failures
+            ),
             "src": None,   # link. Must be missing for answer tests.
             "dst": None,   # link. Must be missing for originate tests.
             "mode": "dtmf",   # see below
