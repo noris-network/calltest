@@ -139,14 +139,14 @@ async def run(obj, checks, as_list):
     Run a one-shot call.
     """
     if not checks:
-        checks = list(k for k,v in obj.calls.items() if as_list or not v.test.skip)
+        checks = list(k for k,v in obj.calls.items() if as_list or not v.test['skip'])
     if not checks:
         raise click.UsageError("No tests known. Missing config file?")
 
     if as_list:
         for c in checks:
             c = obj.calls[c]
-            print(c.name, "m" if c.test.skip else "-", c.info, sep="\t")
+            print(c.name, "m" if c.test['skip'] else "-", c.info, sep="\t")
         return
 
     ast = obj.cfg.asterisk
