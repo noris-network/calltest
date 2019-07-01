@@ -283,6 +283,8 @@ something like this context::
 context ext_bar {
         s => &calltest(bar,);
         i => &calltest(bar,${INVALID_EXTEN});
+        _+! => &calltest(bar,${EXTEN});
+        _X! => &calltest(bar,${EXTEN});
         h => Hangup();
 }
 
