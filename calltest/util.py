@@ -1,6 +1,7 @@
 """
 This module contains various helper functions and classes.
 """
+from collections.abc import Mapping
 
 import logging
 logger = logging.getLogger(__name__)
