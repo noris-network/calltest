@@ -67,8 +67,14 @@ The configuration is a YAML file::
         retry: 300
         src: null
         timeout: 30
-        dtmf_len: 4
-        dtmf_may_repeat: false
+        dtmf:
+          len: 4  # number of digits
+          may_repeat: false  # flag whether repeat decodes are accepted
+                             #  does not affect the generated digits
+        delay:  # values may be floats
+          pre: 1  # incoming: before doing anything
+          ring: 1  # incoming: after RING
+          answer: 1  # in and out: after call establishment
 
       foobar:
         src: foo
@@ -151,6 +157,13 @@ tones. This flag might be necessary with in-band signalling.
 
 ``dtmf_len`` is the number of digits to test. Typically, one digit will be
 repeated. The sequence is otherwise random.
+
+audio
+-----
+
+Audio files are played to the other side.
+
+TODO.
 
 call
 ----

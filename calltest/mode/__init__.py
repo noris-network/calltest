@@ -149,6 +149,19 @@ class BaseInWorker(BaseWorker):
         """
         return _InCall(self)
 
+    async def connect_in(self, state, handle_ringing=True, handle_answer=True):
+            pre_delay = self.call.delay.pre
+            await anyio.sleep(pre_delay)
+            if handle_ringing:
+                ring_delay = self.call.delay.ring
+                await state.channel.ring()
+                await anyio.sleep(ring_delay)
+            if handle_answer:
+                answer_delay = self.call.delay.answer
+                await state.channel.answer()
+                await wait_answered(state)
+                await anyio.sleep(answer_delay)
+
 class _InCall:
     _in_scope = None
     _in_channel = None
@@ -181,7 +194,7 @@ class _InCall:
         return self
 
     @asynccontextmanager
-    async def get(self, state_factory=ChannelState):
+    async def get(self, state_factory=ChannelState, handle_answer=True, handle_ringing=True):
         """
         Wait for the incoming call, return the appropriate ChannelState.
 
@@ -259,6 +272,12 @@ class BaseOutWorker(BaseWorker):
                     except BadStatus as e:
                         if e.status_code != NOT_FOUND:
                             raise
+
+    async def connect_out(self, state, handle_answer=True):
+        if handle_answer:
+            answer_delay = self.call.delay.answer
+            await wait_answered(state)
+            await anyio.sleep(answer_delay)
 
 
 class BaseDualWorker(BaseInWorker,BaseOutWorker):

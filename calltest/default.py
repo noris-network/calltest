@@ -111,8 +111,15 @@ CFG = attrdict(
             "mode": "dtmf",   # see below
             "timeout": 30, # seconds
             "info": "-", # short documentation
-            "dtmf_may_repeat": False, # lax DTMF comparison?
-            "dtmf_len": 5, # #digits
+            "dtmf": attrdict(
+              may_repeat=False, # lax DTMF comparison?
+              len=5, # #digits
+            ),
+            "delay": attrdict(
+                pre=0, # incoming: before doing anything
+                ring=1, # incoming: after setting RINGING
+                answer=1, # after establishing the call
+            )
         },
     },
 )
