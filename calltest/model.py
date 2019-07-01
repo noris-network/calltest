@@ -73,8 +73,8 @@ class Call:
     def __init__(self, links, name, *, timeout, mode="dtmf", info="-", src=None, dst=None, **kw):
         self.name = name
         self.mode = importlib.import_module("calltest.mode."+mode).Worker
-        self.src = links[src] if src is not None else Noen
-        self.dst = links[dst] if dst is not None else Noen
+        self.src = links[src] if src is not None else None
+        self.dst = links[dst] if dst is not None else None
         self.info = info
         self.timeout = timeout
         for k,v in kw.items():
