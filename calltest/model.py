@@ -111,6 +111,59 @@ class Call:
                         logger.debug("OK: %s (%d)", self.name, self.err_count)
                         self.err_count += 1
 
+    async def run(self, client, updated=None):
+        """
+        Background task runner for this test, stores exceptions.
+
+        :param updated: Callback that's fired when this test's status
+                        changes.
+        The accumulated test status is in the ``state`` attribute.
+        """
+        if updated is None:
+            async def updated():
+                pass
+        else:
+            updated = partial(updated, self)
+
+        self.state = state = attrdict(
+            total_run = 0, # total
+            total_fail = 0, # total
+
+            running = False,
+            last_exc = None,
+            fail_map = [], # last 20 or whatever
+            fail_count = 0,
+        )
+
+        while True:
+            state.running = True
+            await updated()
+            try:
+                await self(client)
+            except Exception as exc:
+                state.exc = exc 
+                state.total_fail += 1
+                state.fail_count += 1
+                state.fail_map.append(True)
+            else:
+                state.fail_count = 0 
+                state.fail_map.append(False)
+            finally:
+                state.total_run += 1
+                state.running = False
+
+                if any(state.fail_map):
+                    del state.fail_map[:-20]
+                else:
+                    state.fail_map = []
+                    # zero out after 20 successes in sequence
+
+            await updated()
+            if state.fail_count:
+                await anyio.sleep(self.test.retry)
+            else:
+                await anyio.sleep(self.test.repeat)
+
 
 def gen_calls(links, cfg):
     res = attrdict()
