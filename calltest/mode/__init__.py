@@ -10,6 +10,7 @@ from asyncari.model import Channel
 from calltest.model import locked_links
 
 import logging
+logger = logging.getLogger(__name__)
 
 from asks.errors import BadStatus
 NOT_FOUND = 404
@@ -26,7 +27,7 @@ class DTMFError(RuntimeError):
         self.dts = dts
 
     def __str__(self):
-        return "DTMFError(%s: %s %s)" % (self.total,self.dts)
+        return "DTMFError(%s %s)" % (self.digit,self.dts)
 
 
 class BaseCall:
@@ -62,8 +63,11 @@ class BaseOutCall(BaseCall):
 
 
 def random_dtmf(len=6):
-    res = random.sample("0124356789", k=5)
-    res[len//2:len//2] = [res[len//2]]
+    if len<8:
+        res = random.sample("0124356789", k=len-1)
+        res[len//2:len//2] = [res[len//2]]
+    else:
+        res = random.choices("0124356789", k=len)
     return "".join(res)
 
 
@@ -73,9 +77,10 @@ class ExpectDTMF(DTMFHandler, SyncEvtHandler):
     """
     expected = ""
 
-    def __init__(self, *a, dtmf, **kw):
+    def __init__(self, *a, dtmf, may_repeat=False, **kw):
         self.dtmf = dtmf
         self.dtmf_pos = 0
+        self.may_repeat = may_repeat
         super().__init__(*a, **kw)
 
     @property
@@ -87,7 +92,11 @@ class ExpectDTMF(DTMFHandler, SyncEvtHandler):
         return "<%s: %s>" % (self.__class__.__name__, self.dts)
 
     async def on_dtmf(self, evt):
+        logger.debug("DTMF: %s for %s", evt.digit,self.dts)
+        
         if self.dtmf[self.dtmf_pos] != evt.digit:
+            if self.may_repeat and self.dtmf_pos > 0 and self.dtmf[self.dtmf_pos-1] == evt.digit:
+                return
             raise DTMFError(evt.digit, self.dts)
         self.dtmf_pos += 1
         if self.dtmf_pos == len(self.dtmf):

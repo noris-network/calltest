@@ -111,6 +111,8 @@ CFG = attrdict(
             "mode": "dtmf",   # see below
             "timeout": 30, # seconds
             "info": "-", # short documentation
+            "dtmf_may_repeat": False, # lax DTMF comparison?
+            "dtmf_len": 5, # #digits
         },
     },
 )

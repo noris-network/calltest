@@ -67,11 +67,12 @@ The configuration is a YAML file::
         retry: 300
         src: null
         timeout: 30
+        dtmf_len: 4
+        dtmf_may_repeat: false
 
       foobar:
         src: foo
         dst: bar
-        mode: dtmf
         retry: 300  # default, on error
         repeat: 600  # default, on success
         timeout: 30  # max call duration
@@ -142,8 +143,14 @@ You can configure how CallTest processes a call.
 dtmf
 ----
 
-The answering channel sends a couple of DTMF tones. The originator then
-does the same thing. The codes must match.
+The answering channel sends a random sequence DTMF tones. The originator
+then does the same thing. The codes must match.
+
+When ``dtmf_may_repeat`` is set, the receiver is allowed to read duplicate DTMF
+tones. This flag might be necessary with in-band signalling.
+
+``dtmf_len`` is the number of digits to test. Typically, one digit will be
+repeated. The sequence is otherwise random.
 
 call
 ----
@@ -278,6 +285,9 @@ drop a leading zero::
 Asterisk configuration
 ++++++++++++++++++++++
 
+Test setup
+----------
+
 Asterisk needs to know how to direct incoming calls to the tester. This is
 typically done with a Stasis macro. This is for ``extensions.ael``::
 
@@ -312,4 +322,19 @@ Warning::
 
     These calls all have no spaces after the argument-separating commas.
     This is important.
+
+Line setup
+----------
+
+PJSIP is not very forgiving. Sample config: TODO.
+
+In lieu of voice quality checking, which this system does not yet do, you
+might want to simply set your endpoints' DTMF mode to "inband". Don't use a
+compressing codec when you do this. You might need to set the test's
+``dtmf_may_repeat`` option. However, in-band DTMF is not particularly
+reliable and may break randomly.
+
+The random DTMF sequence only uses digits because letters are not
+universally passed on, while ``#`` and ``*`` may be interpreted and thus
+swallowed by intermediate systems.
 

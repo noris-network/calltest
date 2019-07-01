@@ -15,8 +15,8 @@ class Worker(BaseDualWorker):
             sync = anyio.create_event()
             sync2 = anyio.create_event()
 
-            in_dtmf = random_dtmf()
-            out_dtmf = random_dtmf()
+            in_dtmf = random_dtmf(len=self.call.dtmf_len)
+            out_dtmf = random_dtmf(len=self.call.dtmf_len)
 
             async def run_in():
                 logger.debug("IN A")
@@ -32,7 +32,7 @@ class Worker(BaseDualWorker):
                 logger.debug("IN K")
                 await icm.channel.sendDTMF(dtmf=in_dtmf)
                 logger.debug("IN M")
-                await ExpectDTMF(icm, dtmf=out_dtmf, evt=sync2)
+                await ExpectDTMF(icm, dtmf=out_dtmf, evt=sync2, may_repeat=self.call.dtmf_may_repeat)
                 logger.debug("IN O")
                 await ok.set()
                 logger.debug("IN Q")
@@ -43,7 +43,7 @@ class Worker(BaseDualWorker):
                 logger.debug("OUT C")
                 await anyio.sleep(1)
                 logger.debug("OUT E")
-                await ExpectDTMF(ocm, dtmf=in_dtmf, evt=sync)
+                await ExpectDTMF(ocm, dtmf=in_dtmf, evt=sync, may_repeat=self.call.dtmf_may_repeat)
                 logger.debug("OUT G")
                 await sync2.wait()
                 logger.debug("OUT I")
