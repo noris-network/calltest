@@ -85,9 +85,9 @@ class Call:
         return "<%s:%s>" % (self.__class__.__name__,self.name)
 
     async def __call__(self, client):
-        async with self.lock:
-            async with anyio.fail_after(self.timeout):
-                runner = self.mode(client, self)
+        async with anyio.fail_after(self.timeout):
+            runner = self.mode(client, self)
+            async with runner.lock:
                 try:
                     await runner()
                 except anyio.get_cancelled_exc_class():
