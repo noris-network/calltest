@@ -5,6 +5,7 @@ import anyio
 import importlib
 
 from contextlib import asynccontextmanager, AsyncExitStack
+import traceback
 
 from .util import attrdict, combine_dict
 from .default import DEFAULT
@@ -100,7 +101,7 @@ class Call:
                     else:
                         logger.debug("BAD: %s (%d)", self.name, self.err_count)
                         self.err_count += 1
-                    self.error = exc
+                    self.error = traceback.format_exc()
                 else:
                     if self.error is not None:
                         self.err_count = 1
