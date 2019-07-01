@@ -192,8 +192,6 @@ They should match, somewhat.
 ring
 ----
 
-TODO.
-
 Originate-only: call this number. It should be RINGING. Then hang up.
 
 play
