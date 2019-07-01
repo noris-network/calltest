@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 class Worker(BaseDualWorker):
     async def __call__(self):
         async with self.dual_call() as (icm, ocm):
-            ok = anyio.create_event()
-            sync = anyio.create_event()
+            # Coordinate between the tasks; DTMF sending must wait
+            # until the receiver is listening
+            sync1 = anyio.create_event()
+            sync3 = anyio.create_event()
             sync2 = anyio.create_event()
 
             in_dtmf = random_dtmf(len=self.call.dtmf.len)
@@ -20,19 +22,19 @@ class Worker(BaseDualWorker):
 
             async def run_in():
                 await self.connect_in(icm)
-                await sync.wait()
+                await sync1.wait()
                 await icm.channel.sendDTMF(dtmf=in_dtmf)
                 await ExpectDTMF(icm, dtmf=out_dtmf, evt=sync2, may_repeat=self.call.dtmf.may_repeat)
-                await ok.set()
+                await sync3.set()
 
             async def run_out():
                 await self.connect_out(ocm)
-                await ExpectDTMF(ocm, dtmf=in_dtmf, evt=sync, may_repeat=self.call.dtmf.may_repeat)
+                await ExpectDTMF(ocm, dtmf=in_dtmf, evt=sync1, may_repeat=self.call.dtmf.may_repeat)
                 await sync2.wait()
                 await ocm.channel.sendDTMF(dtmf=out_dtmf)
-                await ok.wait()
+                await sync3.wait()
                 
             await icm.taskgroup.spawn(run_in)
             await ocm.taskgroup.spawn(run_out)
-            await ok.wait()
+            await sync3.wait()
 
