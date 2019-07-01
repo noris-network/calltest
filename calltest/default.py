@@ -109,6 +109,7 @@ CFG = attrdict(
               repeat= 10*60,  # when succeeded
               warn=1,  # enter WARN state after this many failures
               fail=1,  # enter FAIL state after this many failures
+              skip=False,  # test is not auto-run if True
             ),
             "src": None,   # link. Must be missing for answer tests.
             "dst": None,   # link. Must be missing for originate tests.

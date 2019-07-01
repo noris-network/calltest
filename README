@@ -63,8 +63,12 @@ The configuration is a YAML file::
       ':default:':
         dst: null
         mode: dtmf
-        repeat: 600
-        retry: 300
+        test:
+          repeat: 600
+          retry: 300
+          warn: 1
+          fail: 1
+          skip: false
         src: null
         timeout: 30
         dtmf:
@@ -79,9 +83,6 @@ The configuration is a YAML file::
       foobar:
         src: foo
         dst: bar
-        retry: 300  # default, on error
-        repeat: 600  # default, on success
-        timeout: 30  # max call duration
         ringtime: 0  # min time a call must be in RING state (outgoing),
                      # time between RING and answering (incoming)
         url: "" # trigger
@@ -128,9 +129,6 @@ Calls
 
 * mode: How to perform a test. See below.
 
-* retry, repeat: seconds to delay until repeating a call, depending on
-  whether the previous attempt failed or succeeded.
-
 * timeout: Hard limit for a call's duration. If a call exceeds this,
   it is terminated and the test fails.
 
@@ -139,6 +137,18 @@ Calls
 
 The ':default:' values are applied to all other entries (unless overridden),
 which saves you from changing 999 identical entries.
+
+The ``test`` subheading contains values that are relevant for running
+repeated tests in the background:
+
+* retry, repeat: seconds to delay until repeating a call, depending on
+  whether the previous attempt failed or succeeded.
+
+* warn: number of consecutive failures when the test enters "warn" state.
+
+* fail: number of consecutive failures when the test enters "fail" state.
+
+* skip: if True, this test can only be triggered manually.
 
 
 Modes
