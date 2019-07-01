@@ -131,14 +131,23 @@ async def pdb(args):  # safe
     return await main.main(args)
 
 @main.command()
+@click.option("-l","--list", is_flag=True, help="List testcases")
 @click.argument("checks", nargs=-1)
 @click.pass_obj
-async def run(obj, checks):
+async def run(obj, checks, list):
     """
     Run a one-shot call.
     """
     if not checks:
         checks = obj.calls.keys()
+    if not checks:
+        raise click.UsageError("No tests known. Missing config file?")
+
+    if list:
+        for c in checks:
+            c = obj.calls[c]
+            print(c.name, c.info)
+        return
 
     ast = obj.cfg.asterisk
     url = "http://%s:%d/" % (ast.host,ast.port)

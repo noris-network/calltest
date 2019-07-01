@@ -78,6 +78,7 @@ The configuration is a YAML file::
         ringtime: 0  # min time a call must be in RING state (outgoing),
                      # time between RING and answering (incoming)
         url: "" # trigger
+        info: "Check that calling bar from foo works")
 
 The ``logging`` section is described in Python's documentation.
 

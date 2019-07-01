@@ -70,11 +70,12 @@ class Call:
     error = None
     err_count = 0
 
-    def __init__(self, links, name, *, timeout, mode="dtmf", src=None, dst=None, **kw):
+    def __init__(self, links, name, *, timeout, mode="dtmf", info="-", src=None, dst=None, **kw):
         self.name = name
         self.mode = importlib.import_module("calltest.mode."+mode).Worker
         self.src = links[src] if src is not None else Noen
         self.dst = links[dst] if dst is not None else Noen
+        self.info = info
         self.timeout = timeout
         for k,v in kw.items():
             setattr(self,k,v)

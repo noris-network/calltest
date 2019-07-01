@@ -110,6 +110,7 @@ CFG = attrdict(
             "dst": None,   # link. Must be missing for originate tests.
             "mode": "dtmf",   # see below
             "timeout": 30, # seconds
+            "info": "-", # short documentation
         },
     },
 )
