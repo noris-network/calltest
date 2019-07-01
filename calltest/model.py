@@ -9,13 +9,16 @@ from contextlib import asynccontextmanager, AsyncExitStack
 from .util import attrdict, combine_dict
 from .default import DEFAULT
 
+import logging
+logger = logging.getLogger(__name__)
+
 class Link:
     def __init__(self, name, channel, number, prio=0, **kw):
         self.name = name
         self.channel = channel
         self.number = number
         self._prio = prio
-        for k,v in kw:
+        for k,v in kw.items():
             setattr(self,k,v)
         self.lock = anyio.create_lock()
 
@@ -72,7 +75,8 @@ class Call:
         self.mode = importlib.import_module("calltest.mode."+mode).Worker
         self.src = links[src] if src is not None else Noen
         self.dst = links[dst] if dst is not None else Noen
-        for k,v in kw:
+        self.timeout = timeout
+        for k,v in kw.items():
             setattr(self,k,v)
         self.lock = anyio.create_lock()
 
