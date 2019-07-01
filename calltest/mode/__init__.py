@@ -3,6 +3,8 @@
 import anyio
 import random
 from contextlib import asynccontextmanager
+from functools import partial
+from ..util import attrdict
 
 from asyncari.state import DTMFHandler, SyncEvtHandler, ChannelState
 from asyncari.model import Channel
@@ -112,6 +114,9 @@ class BaseWorker:
         return "<%s:%s>" % (self.__class__.__name__, self.call.name)
 
     async def __call__(self):
+        """
+        Single-shot test-once handler, propagates exceptions.
+        """
         raise RuntimeError("You need to override '%s.__call__'" % (self.__class__.__name__,))
 
     @asynccontextmanager

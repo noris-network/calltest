@@ -5,6 +5,7 @@ import anyio
 import importlib
 
 from contextlib import asynccontextmanager, AsyncExitStack
+from functools import partial
 import traceback
 
 from .util import attrdict, combine_dict
