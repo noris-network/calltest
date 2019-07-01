@@ -48,8 +48,8 @@ async def serve(cfg, checks):
     @app.route("/")
     async def index():
         s = attrdict(details=stats)
-        s.fail = list(k for k,v in stats.items() if v.fail_count >= checks[k].test.fail)
-        s.warn = list(k for k,v in stats.items() if checks[k].test.fail > v.fail_count >= checks[k].test.warn)
+        s.fail = list(k for k,v in stats.items() if v.fail_count >= checks[k].test['fail'])
+        s.warn = list(k for k,v in stats.items() if checks[k].test['fail'] > v.fail_count >= checks[k].test['warn'])
         s.n_fail = len(s.fail)
         s.n_warn = len(s.warn)
         return jsonify(s)
@@ -61,7 +61,7 @@ async def serve(cfg, checks):
         async with anyio.create_task_group() as tg:
             await tg.spawn(partial(run, app, **cfg.server, debug=True))
             for c in checks.values():
-                if c.test.skip:
+                if c.test['skip']:
                     continue
                 await tg.spawn(partial(c.run, client, updated=updated))
 

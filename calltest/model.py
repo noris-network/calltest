@@ -161,9 +161,9 @@ class Call:
 
             await updated()
             if state.fail_count:
-                await anyio.sleep(self.test.retry)
+                await anyio.sleep(self.test['retry'])
             else:
-                await anyio.sleep(self.test.repeat)
+                await anyio.sleep(self.test['repeat'])
 
 
 def gen_calls(links, cfg):
