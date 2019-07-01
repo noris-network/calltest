@@ -112,6 +112,7 @@ async def main(ctx, verbose, quiet, log, cfg, conf):
     logging.captureWarnings(verbose > 0)
 
     ctx.obj.links = gen_links(ctx.obj.cfg)
+    ctx.obj.calls = gen_calls(ctx.obj.links, ctx.obj.cfg)
 
 
 @main.command(short_help="Import the debugger",
