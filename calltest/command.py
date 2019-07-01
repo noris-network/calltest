@@ -6,9 +6,13 @@ import asyncclick as click
 from pprint import pprint
 import json
 from functools import partial
+from collections.abc import Mapping
 
-from .util import attrdict
-from .model import gen_links
+import anyio
+import asyncari
+
+from .util import attrdict, combine_dict
+from .model import gen_links, gen_calls
 from .default import CFG
 
 import logging
@@ -127,12 +131,21 @@ async def pdb(args):  # safe
     return await main.main(args)
 
 @main.command()
-@click.argument("check")
+@click.argument("checks", nargs=-1)
 @click.pass_obj
-async def run(obj):
+async def run(obj, checks):
     """
     Run a one-shot call.
     """
+    if not checks:
+        checks = obj.calls.keys()
+
+    ast = obj.cfg.asterisk
+    url = "http://%s:%d/" % (ast.host,ast.port)
+    async with asyncari.connect(url, ast.app, username=ast.username, password=ast.password) as client:
+        async with anyio.create_task_group() as tg:
+            for c in checks:
+                await tg.spawn(obj.calls[c], client)
 
 @main.command()
 @click.pass_obj
