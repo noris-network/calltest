@@ -72,6 +72,7 @@ async def serve(cfg, checks):
         stats[call.name] = call.state
 
     async with asyncari.connect(url, ast.app, username=ast.username, password=ast.password) as client:
+        client._calltest_config = cfg
         async with anyio.create_task_group() as tg:
             await tg.spawn(partial(run, app, **cfg.server, debug=True))
             for c in checks.values():

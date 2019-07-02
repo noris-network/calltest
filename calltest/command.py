@@ -152,6 +152,7 @@ async def run(obj, checks, as_list):
     ast = obj.cfg.asterisk
     url = "http://%s:%d/" % (ast.host,ast.port)
     async with asyncari.connect(url, ast.app, username=ast.username, password=ast.password) as client:
+        client._calltest_config = obj.cfg
         async with anyio.create_task_group() as tg:
             for c in checks:
                 await tg.spawn(obj.calls[c], client)
