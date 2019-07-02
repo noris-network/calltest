@@ -57,6 +57,7 @@ CFG = attrdict(
         username="asterisk",
         password="asterisk",
         app="calltest",
+        audio="sound:calltest/",
 
         dialplan=attrdict(
             country="49",

@@ -8,6 +8,7 @@ from ..util import attrdict
 
 from asyncari.state import DTMFHandler, SyncEvtHandler, ChannelState
 from asyncari.model import Channel
+from asyncari.util import SyncPlay as _SyncPlay
 
 from calltest.model import locked_links
 
@@ -31,6 +32,10 @@ class DTMFError(RuntimeError):
     def __str__(self):
         return "DTMFError(%s %s)" % (self.digit,self.dts)
 
+class SyncPlay(_SyncPlay):
+    def __init__(self, base, filename):
+        filename = base.client._calltest_config.asterisk.audio + filename
+        super().__init__(base, filename)
 
 class BaseCall:
     def __init__(self, worker):

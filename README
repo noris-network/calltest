@@ -43,6 +43,8 @@ The configuration is a YAML file::
         intl: "00"
         nat: "0"
 
+      audio: "sound:calltest/"
+
     server:
       host: 127.0.0.1  # no security here: TODO
       port: 8080
@@ -202,10 +204,10 @@ Originate-only: call this number. It should be RINGING. Then hang up.
 play
 ----
 
-TODO.
-
 Originate-only: call this number. It should answer. Play a sound, then
 hang up.
+
+If no ``src_out`` sound is specified, simply hang up.
 
 fail
 ----
@@ -310,6 +312,16 @@ drop a leading zero::
 
 Asterisk configuration
 ++++++++++++++++++++++
+
+Server connection
+-----------------
+
+Some parameters in the ``asterisk``section require further elucidation.
+
+* app: 
+
+* audio: the (base of) the "sound" URL which Asterisk will use to find your
+  test's outgoing sound files. Should be ``sound:/some/absolute/path``.
 
 Test setup
 ----------
