@@ -90,27 +90,7 @@ class Call:
         runner = self.mode(client, self)
         async with runner.lock:
             async with anyio.fail_after(self.timeout):
-                try:
-                    await runner()
-                except anyio.get_cancelled_exc_class():
-                    raise
-                except Exception as exc:
-                    if self.error is None or type(self.error) != type(exc):
-                        logger.exception("Trying to run %r", self)
-                        if self.error is None:
-                            self.err_count = 1
-                    else:
-                        logger.debug("BAD: %s (%d)", self.name, self.err_count)
-                        self.err_count += 1
-                    self.error = traceback.format_exc()
-                else:
-                    if self.error is not None:
-                        self.err_count = 1
-                        logger.info("OK: %r", self)
-                        self.error = None
-                    else:
-                        logger.debug("OK: %s (%d)", self.name, self.err_count)
-                        self.err_count += 1
+                await runner()
 
     async def run(self, client, updated=None):
         """
@@ -142,7 +122,7 @@ class Call:
             try:
                 await self(client)
             except Exception as exc:
-                state.exc = exc 
+                state.exc = traceback.format_exc()
                 state.total_fail += 1
                 state.fail_count += 1
                 state.fail_map.append(True)
