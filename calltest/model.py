@@ -3,6 +3,8 @@
 
 import anyio
 import importlib
+import time
+import math
 
 from contextlib import asynccontextmanager, AsyncExitStack
 from functools import partial
@@ -71,6 +73,9 @@ def gen_links(cfg):
 class Call:
     error = None
     err_count = 0
+    state = attrdict(status="new", ct_wait=0, ct_run=0)
+    delay = None  # event for starting
+    scope = None  # scope for stopping
 
     def __init__(self, links, name, *, timeout, mode="dtmf", info="-", src=None, dst=None, **kw):
         self.name = name
@@ -88,9 +93,23 @@ class Call:
 
     async def __call__(self, client):
         runner = self.mode(client, self)
-        async with runner.lock:
-            async with anyio.fail_after(self.timeout):
-                await runner()
+        self.state.t_wait=time.time()
+        self.state.status="waiting"
+        self.state.waiting=True
+        try:
+            async with runner.lock:
+                self.state.waiting=False
+                self.state.running=True
+                self.state.status="running"
+                self.state.t_start=time.time()
+                self.state.ct_wait += self.state.t_start-self.state.t_wait
+                async with anyio.fail_after(self.timeout):
+                    await runner()
+        finally:
+            self.state.status="idle"
+            self.state.running=False
+            self.state.t_stop=time.time()
+            self.state.ct_run += self.state.t_stop-self.state.t_start
 
     async def run(self, client, updated=None):
         """
@@ -106,45 +125,80 @@ class Call:
         else:
             updated = partial(updated, self)
 
-        self.state = state = attrdict(
-            total_run = 0, # total
-            total_fail = 0, # total
+        state = self.state
+        state.update({
+            "n_run": 0, # total
+            "n_fail": 0, # total
 
-            running = False,
-            last_exc = None,
-            fail_map = [], # last 20 or whatever
-            fail_count = 0,
-        )
+            "running": False,
+            "last_exc": None,
+            "fail_map": [], # last 20 or whatever
+            "fail_count": 0,
+        })
 
         while True:
-            state.running = True
             await updated()
-            try:
-                await self(client)
-            except Exception as exc:
-                state.exc = traceback.format_exc()
-                state.total_fail += 1
-                state.fail_count += 1
-                state.fail_map.append(True)
-            else:
-                state.fail_count = 0 
-                state.fail_map.append(False)
-            finally:
-                state.total_run += 1
-                state.running = False
+            if self.delay is not None or not self.test['skip']:
+                with anyio.open_cancel_scope() as sc:
+                    self.scope = sc
+                    try:
+                        await self(client)
+                    except anyio.get_cancelled_exc_class():
+                        state.exc = "Canceled"
+                        if self.scope is not None:
+                            state.n_fail += 1
+                            state.fail_count += 1
+                            state.fail_map.append(True)
+                        raise
+                    except Exception as exc:
+                        state.exc = traceback.format_exc()
+                        state.n_fail += 1
+                        state.fail_count += 1
+                        state.fail_map.append(True)
+                    else:
+                        state.fail_count = 0 
+                        state.fail_map.append(False)
+                    finally:
+                        state.n_run += 1
 
-                if any(state.fail_map):
-                    del state.fail_map[:-20]
-                else:
-                    state.fail_map = []
-                    # zero out after 20 successes in sequence
+                        if any(state.fail_map):
+                            del state.fail_map[:-20]
+                        else:
+                            state.fail_map = []
+                            # zero out after 20 successes in sequence
+                        self.scope = None
 
             await updated()
-            if state.fail_count:
-                await anyio.sleep(self.test['retry'])
+            self.delay = anyio.create_event()
+            if self.test['skip']:
+                dly = math.inf
+            elif state.fail_count > 0:
+                dly = self.test['retry']
             else:
-                await anyio.sleep(self.test['repeat'])
+                dly = self.test['repeat']
+            async with anyio.move_on_after(dly):
+                await self.delay.wait()
 
+    async def test_start(self):
+        """
+        Start this test, either prematurely or at all.
+        """
+        if self.delay is None or self.delay.is_set():
+            return False
+        await self.delay.set()
+        return True
+
+    async def test_stop(self, fail=True):
+        """Prematurely stop this test.
+        
+        :param fail: if set (default), count this cancellation as a failure.
+        """
+        sc = self.scope
+        if sc is None:
+            return False
+        if not fail:
+            self.scope = None
+        await sc.cancel()
 
 def gen_calls(links, cfg):
     res = attrdict()

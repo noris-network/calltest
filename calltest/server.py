@@ -63,12 +63,29 @@ async def serve(cfg, checks):
         s.n_ok = len(ok)
         return jsonify(s)
 
-    @app.route("/detail/<test>", methods=['GET'])
-    async def detail(test):
+    @app.route("/test/<test>", methods=['GET'])
+    async def test_detail(test):
         c = checks[test]
         return jsonify(c.state)
 
-    # TODO add start and stop commands to manually trigger tests
+    @app.route("/test/<test>/start", methods=['PUT'])
+    async def test_start(test):
+        c = checks[test]
+        res = await c.test_start()
+        return jsonify({"success":res})
+
+    @app.route("/test/<test>/stop", methods=['PUT'])
+    async def test_stop(test):
+        c = checks[test]
+        res = await c.test_stop(fail=False)
+        return jsonify({"success":res})
+
+    @app.route("/test/<test>/fail", methods=['PUT'])
+    async def test_fail(test):
+        c = checks[test]
+        res = await c.test_stop(fail=True)
+        return jsonify({"success":res})
+
 
     async def updated(call):
         stats[call.name] = call.state
