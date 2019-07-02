@@ -382,3 +382,51 @@ The random DTMF sequence only uses digits because letters are not
 universally passed on, while ``#`` and ``*`` may be interpreted and thus
 swallowed by intermediate systems.
 
+Testing
+-------
+
+This package contains an ``example.cfg`` configuration. To use it, your
+``asterisk.ael`` file should contain these lines::
+
+    macro calltest(link, nr) {
+        Stasis(calltest,${link},${nr});
+        Hangup();
+        return;
+    }
+
+    context direct {
+        _.! => &calltest(${EXTEN},);
+
+        answer => {
+            Wait(1);
+            Answer();
+            Wait(5);
+            Hangup();
+        }
+        ringing => {
+            Wait(1);
+            Ringing();
+            Wait(5);
+            Hangup();
+        }
+        progress => {
+            Wait(1);
+            Progress();
+            Wait(5);
+            Hangup();
+        }   
+    }
+
+Add this to your ``ari.conf``:
+
+    [example]
+    type = user
+    password = oh_no_you_do_not
+    password_format = plain
+
+Finally, add ``enabled=yes`` to the ``[general]`` section of ``http.conf``.
+
+After doing all of this and restarting your Asterisk (reloading "ael",
+"http" and "res_ari" should work too), the command ``./ct -c example.cfg
+run`` should pass.
+
