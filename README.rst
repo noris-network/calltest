@@ -5,8 +5,12 @@ Call tester
 This program connects to an Asterisk server and performs call tests, i.e.
 it causes one channel to call another and verifies that the call worked.
 
-There's also a small JSON server built in that reports on the results and
-which can be used to trigger a test.
+CallTest implements a small JSON server. You can use it with your favorite
+monitoring system to check test results, or to manually trigger a test from
+some web site or via ``curl``.
+
+This package is a work in progress. Some planned features are not yet implemented.
+Also, this README needs to be expanded and split up. Volunteers welcome.
 
 Configuration
 =============
