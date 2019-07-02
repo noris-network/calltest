@@ -11,51 +11,9 @@ which can be used to trigger a test.
 Configuration
 =============
 
-The configuration is a YAML file::
-
-    logging:
-      disable_existing_loggers: false
-      formatters:
-        std: {class: calltest.util.TimeOnlyFormatter, format: '%(asctime)s %(levelname)s:%(name)s:%(message)s'}
-      handlers:
-        logfile: {class: logging.FileHandler, filename: test.log, formatter: std, level: DEBUG}
-        stderr: {class: logging.StreamHandler, formatter: std, level: DEBUG, stream: 'ext://sys.stderr'}
-      loggers:
-        asyncari: {level: INFO}
-      root:
-        handlers: [stderr]
-        level: ERROR
-      version: 1
-    
-    asterisk:
-      app: calltest
-      host: localhost
-      init_timeout: 5
-      port: 8088
-      ssl: false
-
-      username: asterisk # CHANGE ME
-      password: asterisk # CHANGE ME
-
-      dialplan:
-        country: "49"
-        city: "123" # CHANGE ME
-        intl: "00"
-        nat: "0"
-
-      audio:
-        play: "sound:calltest/"
-        record: "calltest/"  ## needs to be in /var/spool/asterisk/recording/
-
-    server:
-      host: 127.0.0.1  # no security here: TODO
-      port: 8080
+The configuration is a YAML file and basically looks like this::
 
     links: 
-      :default:
-        channel: none
-        number: none
-        prio: 0
       foo:
         channel: "SIP/foo/{nr}"
         number: "+49123456789"
@@ -65,46 +23,16 @@ The configuration is a YAML file::
 
     calls:
       ':default:':
-        dst: null
         mode: dtmf
-        test:
-          repeat: 600
-          retry: 300
-          warn: 1
-          fail: 1
-          skip: false
-        src: null
-        timeout: 30
-        audio:  # Path names for audio files.
-          src_in: null
-          src_out: null
-          dst_in: null
-          dst_out: null
-        dtmf:
-          len: 4  # number of digits
-          may_repeat: false  # flag whether repeat decodes are accepted
-                             #  does not affect the generated digits
-        delay:  # values may be floats
-          pre: 1  # incoming: before doing anything
-          ring: 1  # incoming: after RING
-          answer: 1  # in and out: after call establishment
 
       foobar:
         src: foo
         dst: bar
-        ringtime: 0  # min time a call must be in RING state (outgoing),
-                     # time between RING and answering (incoming)
-        url: "" # trigger
-        info: "Check that calling bar from foo works")
+        info: "Check that calling bar from foo works"
 
-The ``logging`` section is described in Python's documentation.
 
-The ``asterisk`` section describes how to connect to your Asterisk server.
-
-``asterisk``, ``server`` and ``logging`` are default sections. In your
-config you only need to add or replace the values you care about,
-everything else will be defaulted in.
-
+See ``example.cfg`` for a working version. Run ``./ct -c example.cfg
+dumpcfg`` for a copy that's been pre-filled with default values.
 
 Links
 +++++
@@ -163,13 +91,13 @@ repeated tests in the background:
 Modes
 +++++
 
-You can configure how CallTest processes a call.
+The ``mode`` value configure how CallTest processes a call.
 
 dtmf
 ----
 
 The answering channel sends a random sequence of DTMF tones. The originator
-then does the same thing. The codes must match.
+then does the same thing. The receivers verify that the codes are correct.
 
 When ``dtmf.may_repeat`` is set, the receiver is allowed to read duplicate DTMF
 tones. This flag might be necessary with in-band signalling.
@@ -260,6 +188,8 @@ and record incoming audio until the originator hangs up.
 Number format
 +++++++++++++
 
+TODO.
+
 CallTest recognizes two kinds of phone numbers: site-local extensions, and
 everything else. CallTest distinguishes these by the initial '+'.
 
@@ -276,31 +206,49 @@ the '+', use this macro::
     }
 
 and then call ``Local/{nr}@mangle``. As another example, if you need to use
-local dial strings::
+lcoal number format to dial out::
 
     context mangle {
         _X! => Dial(SIP/broken/${EXTEN});  // pass-thru for local extensions
-        _+49123! => Dial(SIP/broken/${EXTEN:6});
-        _+49! => Dial(SIP/broken/0${EXTEN:3});
-        _+! => Dial(SIP/broken/00${EXTEN:1});
+        _+49123! => Dial(SIP/broken/${EXTEN:6});  // 49123: country+city
+        _+49! => Dial(SIP/broken/0${EXTEN:3});  // 49: country
+        // _+! => Dial(SIP/broken/00${EXTEN:1});
+        _+! => Congestion();
     }
 
 though you can probably get by with just the first and last line.
+
+The above works for most of Europe where "00" is the international and "0"
+the national prefix. If you're in the NANP (USA or Canada), you probably
+want to use this macro instead::
+
+    context mangle {
+        _N! => Dial(SIP/broken/1888${EXTEN});  // 888 is your area code
+        _[01]! => Dial(SIP/broken/${EXTEN});  // pass-thru for operator and long-distance
+        _+1! => Dial(SIP/broken/${EXTEN:1});  // long distance
+        // _+! => Dial(SIP/broken/011${EXTEN:1});  // international
+        _+! => Congestion();
+    }
+
+The last line is replaced with a "Congestion" blocker so that a mistake
+won't cause international charges.
 
 Incoming
 --------
 
 CallTest will verify that, the caller's number on an incoming call matches
-the number in source link. If that number is prefixed with a '+', the
-caller's number is converted to international format and needs to match
-exactly. Otherwise, the source number must be at the end of the caller's.
+the number in the test's configuration's source link. If that number is
+prefixed with a '+', the incoming number is converted to international
+format, as per the config file, and needs to match exactly. Otherwise, the
+configured number is assumed to be a local extension and must only be at
+the end of the caller's.
 
 This ensures that there's no incoming nonsense, while acknowledging that
 site-local numbers often are not transmitted cleanly.
 
 If you need Asterisk to mangle the caller's number so that it looks sane
 enough for CallTest, add that to the ``calltest`` macro. For instance, to
-drop a leading zero::
+drop a leading zero (in the NANP it's usually a 9)::
 
     macro calltest(typ) {
         SET(cid=${CALLERID(num)})
