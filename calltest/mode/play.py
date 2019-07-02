@@ -4,7 +4,8 @@ import anyio
 
 from . import BaseOutWorker
 from . import wait_ringing
-from . import SyncPlay
+from . import SyncPlay, start_record
+from asyncari.util import mayNotExist
 
 import logging
 logger = logging.getLogger(__name__)
@@ -14,7 +15,15 @@ class Worker(BaseOutWorker):
         async with self.out_call() as ocm:
 
             await self.connect_out(ocm)
-            out = self.call.audio['src_out']
-            if out is not None:
-                await SyncPlay(ocm, out)
+            outfile = self.call.audio.src_out
+            infile = self.call.audio.src_in
+            if outfile is not None:
+                if infile is not None:
+                    res = await start_record(ocm, infile)
+                else:
+                    res = None
+                await SyncPlay(ocm, outfile)
+                if res is not None:
+                    with mayNotExist:
+                        await res.stop(recordingName=infile)
                 

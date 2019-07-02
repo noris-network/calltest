@@ -211,6 +211,9 @@ hang up.
 
 If no ``audio.src_out`` sound is specified, simply hang up.
 
+Optionally, ``audio.dst_in`` records incoming audio during the call.
+Recording only works while the outgoing sound is playing.
+
 
 fail
 ----
