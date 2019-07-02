@@ -43,7 +43,9 @@ The configuration is a YAML file::
         intl: "00"
         nat: "0"
 
-      audio: "sound:calltest/"
+      audio:
+        play: "sound:calltest/"
+        record: "calltest/"  ## needs to be in /var/spool/asterisk/recording/
 
     server:
       host: 127.0.0.1  # no security here: TODO
@@ -207,7 +209,8 @@ play
 Originate-only: call this number. It should answer. Play a sound, then
 hang up.
 
-If no ``src_out`` sound is specified, simply hang up.
+If no ``audio.src_out`` sound is specified, simply hang up.
+
 
 fail
 ----

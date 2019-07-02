@@ -34,7 +34,7 @@ class DTMFError(RuntimeError):
 
 class SyncPlay(_SyncPlay):
     def __init__(self, base, filename):
-        filename = base.client._calltest_config.asterisk.audio + filename
+        filename = base.client._calltest_config.asterisk.audio.play + filename
         super().__init__(base, filename)
 
 class BaseCall:
