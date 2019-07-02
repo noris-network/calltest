@@ -71,6 +71,11 @@ The configuration is a YAML file::
           skip: false
         src: null
         timeout: 30
+        audio:  # Path names for audio files.
+          src_in: null
+          src_out: null
+          dst_in: null
+          dst_out: null
         dtmf:
           len: 4  # number of digits
           may_repeat: false  # flag whether repeat decodes are accepted

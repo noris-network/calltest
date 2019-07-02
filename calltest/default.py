@@ -105,11 +105,11 @@ CFG = attrdict(
     calls = {
         DEFAULT: {
             "test": attrdict(  # options for daemon mode
-              retry= 5*60,  # when failed
-              repeat= 10*60,  # when succeeded
-              warn=1,  # enter WARN state after this many failures
-              fail=1,  # enter FAIL state after this many failures
-              skip=False,  # test is not auto-run if True
+                retry= 5*60,  # when failed
+                repeat= 10*60,  # when succeeded
+                warn=1,  # enter WARN state after this many failures
+                fail=1,  # enter FAIL state after this many failures
+                skip=False,  # test is not auto-run if True
             ),
             "src": None,   # link. Must be missing for answer tests.
             "dst": None,   # link. Must be missing for originate tests.
@@ -117,8 +117,14 @@ CFG = attrdict(
             "timeout": 30, # seconds
             "info": "-", # short documentation
             "dtmf": attrdict(
-              may_repeat=False, # lax DTMF comparison?
-              len=5, # #digits
+                may_repeat=False, # lax DTMF comparison?
+                len=5, # #digits
+            ),
+            "audio": attrdict( # file names for sound support
+                src_in=None,
+                dst_in=None,
+                src_out=None,
+                dst_out=None,
             ),
             "delay": attrdict(
                 pre=0, # incoming: before doing anything
