@@ -49,13 +49,13 @@ async def serve(cfg, checks):
     @app.route("/list", defaults={'with_ok':True}, methods=['GET'])
     async def index(with_ok=False):
         s = attrdict()
-        s.fail = list(k for k,v in stats.items() if v.fail_count >= checks[k].test['fail'])
-        s.warn = list(k for k,v in stats.items() if checks[k].test['fail'] > v.fail_count >= checks[k].test['warn'])
-        s.note = list(k for k,v in stats.items() if checks[k].test['warn'] > v.fail_count > 0 or v.fail_count == 0 and v.fail_map)
+        s.fail = list(k for k,v in stats.items() if v.fail_count >= checks[k].test.fail)
+        s.warn = list(k for k,v in stats.items() if checks[k].test.fail > v.fail_count >= checks[k].test.warn)
+        s.note = list(k for k,v in stats.items() if checks[k].test.warn > v.fail_count > 0 or v.fail_count == 0 and v.fail_map)
         ok = list(k for k,v in stats.items() if v.fail_count == 0 and v.n_run > 0)
         if with_ok:
             s.ok = ok
-            s.skip = list(k for k,v in stats.items() if checks[k].test['skip'])
+            s.skip = list(k for k,v in stats.items() if checks[k].test.skip)
             s.n_skip = len(s.skip)
         s.n_fail = len(s.fail)
         s.n_warn = len(s.warn)
@@ -95,7 +95,7 @@ async def serve(cfg, checks):
         async with anyio.create_task_group() as tg:
             await tg.spawn(partial(run, app, **cfg.server, debug=True))
             for c in checks.values():
-                if c.test['skip']:
+                if c.test.skip:
                     continue
                 await tg.spawn(partial(c.run, client, updated=updated))
 

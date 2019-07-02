@@ -61,11 +61,11 @@ async def locked_links(*locks):
 
 def gen_links(cfg):
     res = attrdict()
-    default = cfg['links'][DEFAULT]
-    for k,v in cfg['links'].items():
+    default = cfg.links[DEFAULT]
+    for k,v in cfg.links.items():
         if k == DEFAULT:
             continue
-        v = combine_dict(v, default)
+        v = combine_dict(v, default, cls=attrdict)
         l = Link(name=k, **v)
         res[k] = l
     return res
@@ -138,7 +138,7 @@ class Call:
 
         while True:
             await updated()
-            if self.delay is not None or not self.test['skip']:
+            if self.delay is not None or not self.test.skip:
                 with anyio.open_cancel_scope() as sc:
                     self.scope = sc
                     try:
@@ -170,12 +170,12 @@ class Call:
 
             await updated()
             self.delay = anyio.create_event()
-            if self.test['skip']:
+            if self.test.skip:
                 dly = math.inf
             elif state.fail_count > 0:
-                dly = self.test['retry']
+                dly = self.test.retry
             else:
-                dly = self.test['repeat']
+                dly = self.test.repeat
             async with anyio.move_on_after(dly):
                 await self.delay.wait()
 
@@ -202,11 +202,11 @@ class Call:
 
 def gen_calls(links, cfg):
     res = attrdict()
-    default = cfg['calls'][DEFAULT]
-    for k,v in cfg['calls'].items():
+    default = cfg.calls[DEFAULT]
+    for k,v in cfg.calls.items():
         if k == DEFAULT:
             continue
-        v = combine_dict(v, default)
+        v = combine_dict(v, default, cls=attrdict)
         c = Call(links, name=k, **v)
         res[k] = c
     return res
