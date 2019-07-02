@@ -159,21 +159,21 @@ You can configure how CallTest processes a call.
 dtmf
 ----
 
-The answering channel sends a random sequence DTMF tones. The originator
+The answering channel sends a random sequence of DTMF tones. The originator
 then does the same thing. The codes must match.
 
-When ``dtmf_may_repeat`` is set, the receiver is allowed to read duplicate DTMF
+When ``dtmf.may_repeat`` is set, the receiver is allowed to read duplicate DTMF
 tones. This flag might be necessary with in-band signalling.
 
-``dtmf_len`` is the number of digits to test. Typically, one digit will be
+``dtmf.len`` is the number of digits to test. Typically, one digit will be
 repeated. The sequence is otherwise random.
 
 audio
 -----
 
-Audio files are played to the other side.
-
 TODO.
+
+Audio files are played to the other side.
 
 call
 ----
@@ -205,19 +205,19 @@ hang up.
 fail
 ----
 
-Originate-only: call this number. The call may not go through. It must be
-rejected before getting to RING state.
-
 TODO.
+
+Originate-only: call this number. The call may not go through. It must be
+rejected before getting to RING state, some time before ``ringtime``.
 
 timeout
 -------
 
-Originate-only: call this number. The call may not go through. It must be
-RINGing and then be rejected between ``ringtime`` and ``timeout``.
-
 TODO.
 
+Originate-only: call this number. The call may not go through. It must be
+RINGing and then be rejected between ``ringtime`` and ``timeout`` seconds
+later.
 
 wait
 ----
@@ -241,7 +241,7 @@ record
 TODO.
 
 Answer-only:  wait for an incoming call, answer it, optionally play a sound,
-then record incoming audio until the originator hangs up.
+and record incoming audio until the originator hangs up.
 
 
 Number format
