@@ -13,5 +13,4 @@ class Worker(BaseOutWorker):
         async with self.out_call() as ocm:
 
             await self.connect_out(ocm, handle_ringing=True)
-            await anyio.sleep(1)
-                
+
