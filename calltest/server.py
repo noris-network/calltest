@@ -7,7 +7,7 @@ from quart_trio import QuartTrio as Quart
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve as hyper_serve
 from quart.logging import create_serving_logger
-from quart import jsonify
+from quart import jsonify, websocket
 
 async def run (  # type: ignore
     self, # app
@@ -44,6 +44,7 @@ async def serve(cfg, checks):
     url = "http://%s:%d/" % (ast.host,ast.port)
 
     stats = {}
+    socks = set()
     app = Quart("calltest.server", root_path="/tmp")
     @app.route("/", methods=['GET'])
     @app.route("/list", defaults={'with_ok':True}, methods=['GET'])
@@ -62,6 +63,15 @@ async def serve(cfg, checks):
         s.n_note = len(s.note)
         s.n_ok = len(ok)
         return jsonify(s)
+
+    async def alert(**msg):
+        ds = set()
+        for s in socks:
+            try:
+                await s.send(msg)
+            except Exception:
+                ds.add(s)
+        socks -= ds
 
     @app.route("/test/<test>", methods=['GET'])
     async def test_detail(test):
@@ -86,8 +96,19 @@ async def serve(cfg, checks):
         res = await c.test_stop(fail=True)
         return jsonify({"success":res})
 
+    @app.websocket('/ws')
+    async def ws():
+        try:
+            sock = websocket._get_current_object()
+            socks.add(sock)
+            while True:
+                data = await sock.receive()
+                print("IN",data)
+        finally:
+            socks.remove(sock)
 
     async def updated(call):
+        await alert(action="update", name=call.name, state=call.state)
         stats[call.name] = call.state
 
     async with asyncari.connect(url, ast.app, username=ast.username, password=ast.password) as client:
