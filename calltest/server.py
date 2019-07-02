@@ -45,14 +45,28 @@ async def serve(cfg, checks):
 
     stats = {}
     app = Quart("calltest.server", root_path="/tmp")
-    @app.route("/")
-    async def index():
-        s = attrdict(details=stats)
+    @app.route("/", methods=['GET'])
+    @app.route("/list", defaults={'with_ok':True}, methods=['GET'])
+    async def index(with_ok=False):
+        s = attrdict()
         s.fail = list(k for k,v in stats.items() if v.fail_count >= checks[k].test['fail'])
         s.warn = list(k for k,v in stats.items() if checks[k].test['fail'] > v.fail_count >= checks[k].test['warn'])
+        s.note = list(k for k,v in stats.items() if checks[k].test['warn'] > v.fail_count > 0 or v.fail_count == 0 and v.fail_map)
+        ok = list(k for k,v in stats.items() if v.fail_count == 0)
+        if with_ok:
+            s.ok = ok
         s.n_fail = len(s.fail)
         s.n_warn = len(s.warn)
+        s.n_note = len(s.note)
+        s.n_ok = len(ok)
         return jsonify(s)
+
+    @app.route("/detail/<test>", methods=['GET'])
+    async def detail(test):
+        c = checks[test]
+        return jsonify(c.state)
+
+    # TODO add start and stop commands to manually trigger tests
 
     async def updated(call):
         stats[call.name] = call.state
