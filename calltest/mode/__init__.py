@@ -5,6 +5,7 @@ import random
 from contextlib import asynccontextmanager
 from functools import partial
 from ..util import attrdict
+from asyncari.util import mayNotExist
 
 from asyncari.state import DTMFHandler, SyncEvtHandler, ChannelState
 from asyncari.model import Channel
@@ -14,9 +15,6 @@ from calltest.model import locked_links
 
 import logging
 logger = logging.getLogger(__name__)
-
-from asks.errors import BadStatus
-NOT_FOUND = 404
 
 async def wait_answered(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state == "Up")
@@ -227,10 +225,8 @@ class _InCall:
             if self._in_channel is not None:
                 self.worker.in_logger.debug("Hang up %r", self._in_channel)
                 try:
-                    await self._in_channel.hangup()
-                except BadStatus as e:
-                    if e.status_code != NOT_FOUND:
-                        raise
+                    with mayNotExist:
+                        await self._in_channel.hangup()
                 finally:
                     self._in_channel = None
 
@@ -283,11 +279,8 @@ class BaseOutWorker(BaseWorker):
             async with anyio.open_cancel_scope(shield=True):
                 self.out_logger.debug("Hang up %r", oc)
                 if oc is not None:
-                    try:
+                    with mayNotExist:
                         await oc.hangup()
-                    except BadStatus as e:
-                        if e.status_code != NOT_FOUND:
-                            raise
 
     async def connect_out(self, state, handle_answer=True, handle_ringing=False):
         if handle_ringing:
