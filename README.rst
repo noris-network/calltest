@@ -165,8 +165,6 @@ later.
 wait
 ----
 
-TODO.
-
 Answer-only: wait for an incoming call, set it to RINGING, wait a few
 seconds, hang up.
 
