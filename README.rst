@@ -109,13 +109,6 @@ tones. This flag might be necessary with in-band signalling.
 ``dtmf.len`` is the number of digits to test. Typically, one digit will be
 repeated. The sequence is otherwise random.
 
-audio
------
-
-TODO.
-
-Audio files are played to the other side.
-
 call
 ----
 
@@ -127,8 +120,8 @@ audio
 
 TODO.
 
-Like DTMF, but both send a sound file instead. The sounds are recorded.
-They should match, somewhat.
+Like DTMF, but both sides send a sound file instead. The sounds are
+recorded. They should match, somewhat, but that's not yet tested.
 
 ring
 ----
@@ -144,7 +137,7 @@ hang up.
 If no ``audio.src_out`` sound is specified, simply hang up.
 
 Optionally, ``audio.dst_in`` records incoming audio during the call.
-Recording only works while the outgoing sound is playing.
+Recording runs while the outgoing sound is playing.
 
 
 fail
@@ -153,7 +146,11 @@ fail
 TODO.
 
 Originate-only: call this number. The call may not go through. It must be
-rejected before getting to RING state, some time before ``ringtime``.
+rejected, some time before ``ringtime``.
+
+Also TODO: Add a flag to determine whether an intermediate ``Ringing``
+state is allowed / required / prohibited.
+
 
 timeout
 -------
@@ -164,6 +161,7 @@ Originate-only: call this number. The call may not go through. It must be
 RINGing and then be rejected between ``ringtime`` and ``timeout`` seconds
 later.
 
+
 wait
 ----
 
@@ -172,13 +170,15 @@ TODO.
 Answer-only: wait for an incoming call, set it to RINGING, wait a few
 seconds, hang up.
 
+
 answer
 ------
 
 TODO.
 
 Answer-only: wait for an incoming call, answer it, optionally play a sound,
-then hang up.
+optionally² record incoming audio while the sound is playing, then hang up.
+
 
 record
 ------
@@ -186,13 +186,13 @@ record
 TODO.
 
 Answer-only:  wait for an incoming call, answer it, optionally play a sound,
-and record incoming audio until the originator hangs up.
+optionally record incoming audio until the originator hangs up.
 
 
 Number format
 +++++++++++++
 
-TODO.
+TODO: currently caller numbers are neither transmitted nor checked.
 
 CallTest recognizes two kinds of phone numbers: site-local extensions, and
 everything else. CallTest distinguishes these by the initial '+'.
