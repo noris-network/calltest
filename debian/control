@@ -1,0 +1,33 @@
+Source: calltest
+Maintainer: Matthias Urlichs <matthias@urlichs.de>
+Section: python
+Priority: optional
+Build-Depends: dh-python, python3-setuptools, python3-all, debhelper (>= 9)
+Standards-Version: 3.9.6
+Homepage: https://github.com/smurfix/calltest
+
+Package: python3-calltest
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: A distributed phone call test program
+ ===========
+ Call tester
+ ===========
+ .
+ This program connects to an Asterisk server and performs call tests, i.e.
+ it causes one channel to call another and verifies that the call worked.
+ .
+ CallTest implements a small JSON server. You can use it with your favorite
+ monitoring system to check test results, or to manually trigger a test from
+ some web site or via ``curl``.
+ .
+ This package is a work in progress. Some planned features are not yet implemented.
+ Also, this README needs to be expanded and split up. Volunteers welcome.
+ .
+ Configuration
+ =============
+ .
+ The configuration is a YAML file and basically looks like this::
+ .
+     links: 
+
