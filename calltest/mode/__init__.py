@@ -9,7 +9,7 @@ from asyncari.util import mayNotExist
 
 from asyncari.state import DTMFHandler, SyncEvtHandler, ChannelState
 from asyncari.model import Channel
-from asyncari.util import SyncPlay as _SyncPlay
+from asyncari.state import SyncPlay as _SyncPlay
 
 from calltest.model import locked_links
 
