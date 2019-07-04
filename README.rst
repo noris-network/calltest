@@ -118,8 +118,6 @@ hang up.
 audio
 -----
 
-TODO.
-
 Like DTMF, but both sides send a sound file instead. The sounds are
 recorded. They should match, somewhat, but that's not yet tested.
 

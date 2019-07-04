@@ -15,7 +15,7 @@ setup(
     setup_requires=["setuptools_scm", "pytest_runner"],
     install_requires=[
         "asyncclick",
-        "asyncari >= 0.7.1",
+        "asyncari >= 0.7.3",
         "trio >= 0.11",
         "range_set >= 0.2",
         "attrs >= 18.2",
