@@ -172,10 +172,11 @@ seconds, hang up.
 answer
 ------
 
-TODO.
-
 Answer-only: wait for an incoming call, answer it, optionally play a sound,
-optionally² record incoming audio while the sound is playing, then hang up.
+optionally² record audio while the sound is playing, then hang up.
+
+The recording will be overlaid with the outgoing sound. This is an Asterisk
+limitation.
 
 
 record

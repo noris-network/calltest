@@ -35,10 +35,10 @@ class SyncPlay(_SyncPlay):
         filename = base.client._calltest_config.asterisk.audio.play + filename
         super().__init__(base, filename)
 
-async def start_record(chan_state, filename, format="wav", ifExists="overwrite", **kw):
+async def start_record(state, filename, format="wav", ifExists="overwrite", **kw):
     #rec = chan_state.client._calltest_config.asterisk.audio.record
     rec=""
-    return await chan_state.channel.record(name=rec+filename, format=format, ifExists=ifExists, **kw)
+    return await state.ref.record(name=rec+filename, format=format, ifExists=ifExists, **kw)
 
 class BaseCall:
     def __init__(self, worker):
