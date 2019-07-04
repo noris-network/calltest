@@ -175,17 +175,16 @@ answer
 Answer-only: wait for an incoming call, answer it, optionally play a sound,
 optionally² record audio while the sound is playing, then hang up.
 
-The recording will be overlaid with the outgoing sound. This is an Asterisk
-limitation.
-
 
 record
 ------
 
-TODO.
-
 Answer-only:  wait for an incoming call, answer it, optionally play a sound,
-optionally record incoming audio until the originator hangs up.
+optionally record incoming audio until the originator hangs up or presses
+``#``.
+
+The recording will be overlaid with the outgoing sound. This is an Asterisk
+limitation.
 
 
 Number format
