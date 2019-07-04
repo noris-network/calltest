@@ -9,7 +9,7 @@ from asyncari.util import mayNotExist
 
 from asyncari.state import DTMFHandler, SyncEvtHandler, ChannelState
 from asyncari.model import Channel
-from asyncari.util import SyncPlay as _SyncPlay
+from asyncari.state import SyncPlay as _SyncPlay
 
 from calltest.model import locked_links
 
@@ -35,10 +35,10 @@ class SyncPlay(_SyncPlay):
         filename = base.client._calltest_config.asterisk.audio.play + filename
         super().__init__(base, filename)
 
-async def start_record(chan_state, filename, format="wav", ifExists="overwrite", **kw):
+async def start_record(state, filename, format="wav", ifExists="overwrite", **kw):
     #rec = chan_state.client._calltest_config.asterisk.audio.record
     rec=""
-    return await chan_state.channel.record(name=rec+filename, format=format, ifExists=ifExists, **kw)
+    return await state.ref.record(name=rec+filename, format=format, ifExists=ifExists, **kw)
 
 class BaseCall:
     def __init__(self, worker):
@@ -148,7 +148,7 @@ class BaseInWorker(BaseWorker):
     def lock(self):
         return self.call.dst.lock
 
-    def in_call(self):
+    def in_call(self, delayed=False, state_factory=ChannelState):
         """
         An async context manager that handles processing of a single
         incoming call.
@@ -160,7 +160,7 @@ class BaseInWorker(BaseWorker):
                 in_mgr = await in_hdl.get(MyChannelStateClass)
                 await in_mgr.channel.ring()
         """
-        return _InCall(self)
+        return _InCall(self, delayed, state_factory=state_factory)
 
     async def connect_in(self, state, handle_ringing=True, handle_answer=True):
             pre_delay = self.call.delay.pre
@@ -179,9 +179,12 @@ class _InCall:
     _in_scope = None
     _in_channel = None
     _evt = None
+    _state = None
 
-    def __init__(self, worker):
+    def __init__(self, worker, delayed=False, state_factory=ChannelState):
         self.worker = worker
+        self.delayed = delayed
+        self.state_factory = state_factory
 
     async def _listen(self, evt):
         w = self.worker
@@ -204,10 +207,16 @@ class _InCall:
         await self.worker.client.taskgroup.spawn(self._listen, evt)
         await evt.wait()
         self.worker.in_logger.debug("Wait for call: registered")
-        return self
+        if self.delayed:
+            return self
+
+        await self._evt.wait()
+        self._state = self.state_factory(self._in_channel)
+        await self._state.start_task()
+        return self._state
 
     @asynccontextmanager
-    async def get(self, state_factory=ChannelState):
+    async def get(self, state_factory=None):
         """
         Wait for the incoming call, return the appropriate ChannelState.
 
@@ -216,6 +225,8 @@ class _InCall:
         """
         self.worker.in_logger.debug("Wait for call")
         await self._evt.wait()
+        if state_factory is None:
+            state_factory = self.state_factory
         ics = state_factory(self._in_channel)
         self.worker.in_logger.debug("Wait for call: %r", ics)
         async with ics:
@@ -224,6 +235,9 @@ class _InCall:
     async def __aexit__(self, *tb):
         self.worker.in_logger.debug("Wait for call: end")
         async with anyio.open_cancel_scope(shield=True):
+            if self._state is not None:
+                await self._state.done()
+                self._state = None
             if self._in_scope is not None:
                 await self._in_scope.cancel()
                 self._in_scope = None
@@ -305,7 +319,7 @@ class BaseDualWorker(BaseInWorker,BaseOutWorker):
 
     @asynccontextmanager
     async def dual_call(self):
-        async with self.in_call() as ic:
+        async with self.in_call(delayed=True) as ic:
             async with self.out_call() as ocm:
                 async with ic.get() as icm:
                     yield icm,ocm
