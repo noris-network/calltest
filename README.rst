@@ -273,7 +273,7 @@ Asterisk configuration
 Server connection
 -----------------
 
-Some parameters in the ``asterisk``section require further elucidation.
+Some parameters in the ``asterisk`` section require further elucidation.
 
 * app: 
 
@@ -305,13 +305,13 @@ You'd call this macro from your context::
 If you want to route all incoming calls on a channel to this macro, use
 something like this context::
 
-context ext_bar {
+   context ext_bar {
         s => &calltest(bar,);
         i => &calltest(bar,${INVALID_EXTEN});
         _+! => &calltest(bar,${EXTEN});
         _X! => &calltest(bar,${EXTEN});
         h => Hangup();
-}
+   }
 
 Warning::
 
