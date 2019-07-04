@@ -3,7 +3,7 @@
 import anyio
 
 from . import BaseDualWorker
-from . import ExpectDTMF, wait_answered, random_dtmf
+from . import ExpectDTMF, random_dtmf
 
 import logging
 logger = logging.getLogger(__name__)
