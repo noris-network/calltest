@@ -260,9 +260,23 @@ class BaseOutWorker(BaseWorker):
         self.out_logger.debug("Calling %s", ep)
 
         try:
-            oc = await self.client.channels.originate(endpoint=ep, app=self.client._app, appArgs=[":dialed",dest_nr])
-            ocs = state_factory(oc)
-            async with ocs:
+            src_name = self.call.src.name
+        except AttributeError:
+            src_name = self.call.name
+        try:
+            src_number = self.call.src.number
+        except AttributeError:
+            src_number = ""
+        src_cid = "%s <%s>" % (src_name,src_number)
+
+        try:
+            vars = {'CALLERID(name)': src_name, 'CALLERID(num)': src_number,
+                    'CONNECTEDLINE(name)': src_name, 'CONNECTEDLINE(num)': src_number,}
+            chan_id = self.client.generate_id("C")
+            oc = Channel(self.client, id=chan_id)
+            async with state_factory(oc) as ocs:
+                await self.client.channels.originateWithId(channelId=chan_id, endpoint=ep, app=self.client._app,
+                    appArgs=[":dialed",dest_nr], variables=vars, callerId=src_cid)
                 self.out_logger.debug("Call placed: %r", ocs)
                 yield ocs
         finally:
