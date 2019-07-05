@@ -22,6 +22,9 @@ async def wait_answered(chan_state):
 async def wait_ringing(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state in {"Up", "Ringing", "Ring"})
 
+class WrongCallerID(ValueError):
+    pass
+
 class DTMFError(RuntimeError):
     def __init__(self, digit, dts):
         self.digit = digit
@@ -41,38 +44,6 @@ async def start_record(state, filename, format="wav", ifExists="overwrite", **kw
     rec = await state.ref.record(name=filename, format=format, ifExists=ifExists, **kw)
     await rec.wait_recording()
     return rec
-
-
-class BaseCall:
-    def __init__(self, worker):
-        self.worker = worker
-        self.client = self.worker.client
-        self.call = self.worker.call
-    
-    def __repr__(self):
-        return "<%s:%s>" % (self.__class__.__name__, self.worker.call.name)
-
-
-
-class BaseInCall(BaseCall):
-    async def listen(self):
-        try:
-            yield self
-        finally:
-            del self.client.in_chan
-
-
-class BaseOutCall(BaseCall):
-    @asynccontextmanager
-    async def call(self):
-        ch_id = self.client.generate_id("C")
-        ch_dest = self.call.src.channel.format(nr=self.call.dst.number)
-        ch = await self.client.channels.originate(channelId=ch_id, endpoint=ch_dest, app=self.client._app, appArgs=[":dialed", self.call.name], **kw)
-        try:
-            yield ch
-        finally:
-            async with anyio.open_cancel_scope(shield=True):
-                await ch.hang_up()
 
 
 def random_dtmf(len=6):
@@ -114,6 +85,32 @@ class ExpectDTMF(DTMFHandler, SyncEvtHandler):
         self.dtmf_pos += 1
         if self.dtmf_pos == len(self.dtmf):
             await self.done()
+
+
+def nr_check(dialed, cid, dialplan):
+    """Verify that the incoming callerid matches the dialled number"""
+    if dialed[0] != '+':
+        return cid.endswith(dialed)
+    if cid[0] != '+':
+        if dialplan.country == '1': ## NANP
+            if cid[0] == '1':
+                cid = '+'+cid
+            elif cid[0:3] == "011":
+                cid = '+'+cid[3:]
+            elif len(cid) == 7:
+                cid = "+1"+dialplan.city+cid
+            elif len(cid) == 10:
+                cid = "+1"+cid
+            else:
+                return False
+        else:
+            if cid.startswith(dialplan.intl):
+                cid = '+'+cid[len(dialplan.intl):]
+            elif cid.startswith(dialplan.natl):
+                cid = '+'+dialplan.country+cid[len(dialplan.natl):]
+            else:
+                cid = '+'+dialplan.country+dialplan.city+cid
+    return dialed == cid
 
 
 class BaseWorker:
@@ -167,6 +164,9 @@ class BaseInWorker(BaseWorker):
 
     async def connect_in(self, state, handle_ringing=True, handle_answer=True):
             pre_delay = self.call.delay.pre
+            if self.call.check_callerid:
+                if not nr_check(self.call.src.number, state.channel.caller['number'], self.client._calltest_config.asterisk.dialplan):
+                    raise WrongCallerID(self.call.src.number, state.channel.caller['number'])
             await anyio.sleep(pre_delay)
             if handle_ringing:
                 ring_delay = self.call.delay.ring
@@ -178,6 +178,7 @@ class BaseInWorker(BaseWorker):
                 await wait_answered(state)
                 await anyio.sleep(answer_delay)
 
+    
 class _InCall:
     _in_scope = None
     _in_channel = None
@@ -292,9 +293,23 @@ class BaseOutWorker(BaseWorker):
         self.out_logger.debug("Calling %s", ep)
 
         try:
-            oc = await self.client.channels.originate(endpoint=ep, app=self.client._app, appArgs=[":dialed",dest_nr])
-            ocs = state_factory(oc)
-            async with ocs:
+            src_name = self.call.src.name
+        except AttributeError:
+            src_name = self.call.name
+        try:
+            src_number = self.call.src.number
+        except AttributeError:
+            src_number = ""
+        src_cid = "%s <%s>" % (src_name,src_number)
+
+        try:
+            vars = {'CALLERID(name)': src_name, 'CALLERID(num)': src_number,
+                    'CONNECTEDLINE(name)': src_name, 'CONNECTEDLINE(num)': src_number,}
+            chan_id = self.client.generate_id("C")
+            oc = Channel(self.client, id=chan_id)
+            async with state_factory(oc) as ocs:
+                await self.client.channels.originateWithId(channelId=chan_id, endpoint=ep, app=self.client._app,
+                    appArgs=[":dialed",dest_nr], variables=vars, callerId=src_cid)
                 self.out_logger.debug("Call placed: %r", ocs)
                 yield ocs
         finally:

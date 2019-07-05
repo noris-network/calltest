@@ -66,7 +66,7 @@ CFG = attrdict(
             country="49",
             intl="00",
             city="FIXME",
-            nat="0"
+            natl="0"
         ),
     ),
     server=attrdict(
@@ -134,7 +134,8 @@ CFG = attrdict(
                 pre=0, # incoming: before doing anything
                 ring=1, # incoming: after setting RINGING
                 answer=1, # after establishing the call
-            )
+            ),
+            "check_callerid": True,
         },
     },
 )
