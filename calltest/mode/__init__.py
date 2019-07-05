@@ -43,38 +43,6 @@ async def start_record(state, filename, format="wav", ifExists="overwrite", **kw
     return rec
 
 
-class BaseCall:
-    def __init__(self, worker):
-        self.worker = worker
-        self.client = self.worker.client
-        self.call = self.worker.call
-    
-    def __repr__(self):
-        return "<%s:%s>" % (self.__class__.__name__, self.worker.call.name)
-
-
-
-class BaseInCall(BaseCall):
-    async def listen(self):
-        try:
-            yield self
-        finally:
-            del self.client.in_chan
-
-
-class BaseOutCall(BaseCall):
-    @asynccontextmanager
-    async def call(self):
-        ch_id = self.client.generate_id("C")
-        ch_dest = self.call.src.channel.format(nr=self.call.dst.number)
-        ch = await self.client.channels.originate(channelId=ch_id, endpoint=ch_dest, app=self.client._app, appArgs=[":dialed", self.call.name], **kw)
-        try:
-            yield ch
-        finally:
-            async with anyio.open_cancel_scope(shield=True):
-                await ch.hang_up()
-
-
 def random_dtmf(len=6):
     if len<8:
         res = random.sample("0124356789", k=len-1)
