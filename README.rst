@@ -76,6 +76,8 @@ Calls
 * url: for answer-only modes, you need a way to cause a call. For now this
   is done by fetching the data at this URL.
 
+* check_callerid: set to ``false`` to disable Caller ID verification.
+
 The ':default:' values are applied to all other entries (unless overridden),
 which saves you from changing 999 identical entries.
 
@@ -188,8 +190,6 @@ limitation.
 Number format
 +++++++++++++
 
-TODO: currently caller numbers are neither transmitted nor checked.
-
 CallTest recognizes two kinds of phone numbers: site-local extensions, and
 everything else. CallTest distinguishes these by the initial '+'.
 
@@ -197,12 +197,11 @@ Outgoing
 --------
 
 The outgoing Asterisk channel should be able to handle both kinds directly.
-If not, either drop-kick your phone provider, or write a "Local" channel
-that mangles the dialled number for you. For instance, if you need to drop
-the '+', use this macro::
+If not, you need to write a "Local" channel that mangles the dialled number.
+For instance, if you need to drop the '+', use this macro::
 
     context mangle {
-        _+! => { Dial(SIP/broken/${EXTEN:1}) }
+        _+! => Dial(SIP/broken/${EXTEN:1});
     }
 
 and then call ``Local/{nr}@mangle``. As another example, if you need to use
@@ -211,16 +210,15 @@ lcoal number format to dial out::
     context mangle {
         _X! => Dial(SIP/broken/${EXTEN});  // pass-thru for local extensions
         _+49123! => Dial(SIP/broken/${EXTEN:6});  // 49123: country+city
-        _+49! => Dial(SIP/broken/0${EXTEN:3});  // 49: country
-        // _+! => Dial(SIP/broken/00${EXTEN:1});
+        _+49! => Dial(SIP/broken/0${EXTEN:3});  // 49: country; 0: national prefix
+        // _+! => Dial(SIP/broken/00${EXTEN:1}); // 00: international prefix
         _+! => Congestion();
     }
 
 though you can probably get by with just the first and last line.
 
-The above works for most of Europe where "00" is the international and "0"
-the national prefix. If you're in the NANP (USA or Canada), you probably
-want to use this macro instead::
+If you're in the NANP (USA or Canada), you probably want to use this macro
+instead::
 
     context mangle {
         _N! => Dial(SIP/broken/1888${EXTEN});  // 888 is your area code
@@ -230,25 +228,26 @@ want to use this macro instead::
         _+! => Congestion();
     }
 
-The last line is replaced with a "Congestion" blocker so that a mistake
+The last line causes a "Congestion" blocker so that a mistake
 won't cause international charges.
 
 Incoming
 --------
 
-CallTest will verify that, the caller's number on an incoming call matches
+CallTest will verify that the caller's number on an incoming call matches
 the number in the test's configuration's source link. If that number is
 prefixed with a '+', the incoming number is converted to international
-format, as per the config file, and needs to match exactly. Otherwise, the
-configured number is assumed to be a local extension and must only be at
-the end of the caller's.
+format and needs to match exactly. Otherwise, the configured number is
+assumed to be a local extension and must only be at the end of the
+caller's.
 
 This ensures that there's no incoming nonsense, while acknowledging that
 site-local numbers often are not transmitted cleanly.
 
 If you need Asterisk to mangle the caller's number so that it looks sane
-enough for CallTest, add that to the ``calltest`` macro. For instance, to
-drop a leading zero (in the NANP it's usually a 9)::
+enough for CallTest, add that to the ``calltest`` macro. For instance, if
+your phone system adds a leading "get a trunk line" zero (in the NANP it's
+usually a 9) to incoming calls, you'd do this::
 
     macro calltest(typ) {
         SET(cid=${CALLERID(num)})
@@ -263,6 +262,11 @@ drop a leading zero (in the NANP it's usually a 9)::
         Hangup();
         return;
     }
+
+We know that it's annoying to have to play with Asterisk's dialplans for this.
+If you want to add a pattern-match-based number manglich scheme to
+CallTest, great, we'll gladly accept a pull request. However, "sane" modern
+phone systems should work fine with the default setting.
 
 Asterisk configuration
 ++++++++++++++++++++++

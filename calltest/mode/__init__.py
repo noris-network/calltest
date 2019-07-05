@@ -22,6 +22,9 @@ async def wait_answered(chan_state):
 async def wait_ringing(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state in {"Up", "Ringing", "Ring"})
 
+class WrongCallerID(ValueError):
+    pass
+
 class DTMFError(RuntimeError):
     def __init__(self, digit, dts):
         self.digit = digit
@@ -84,6 +87,32 @@ class ExpectDTMF(DTMFHandler, SyncEvtHandler):
             await self.done()
 
 
+def nr_check(dialed, cid, dialplan):
+    """Verify that the incoming callerid matches the dialled number"""
+    if dialed[0] != '+':
+        return cid.endswith(dialed)
+    if cid[0] != '+':
+        if dialplan.country == '1': ## NANP
+            if cid[0] == '1':
+                cid = '+'+cid
+            elif cid[0:3] == "011":
+                cid = '+'+cid[3:]
+            elif len(cid) == 7:
+                cid = "+1"+dialplan.city+cid
+            elif len(cid) == 10:
+                cid = "+1"+cid
+            else:
+                return False
+        else:
+            if cid.startswith(dialplan.intl):
+                cid = '+'+cid[len(dialplan.intl):]
+            elif cid.startswith(dialplan.natl):
+                cid = '+'+dialplan.country+cid[len(dialplan.natl):]
+            else:
+                cid = '+'+dialplan.country+dialplan.city+cid
+    return dialed == cid
+
+
 class BaseWorker:
     def __init__(self, client, call):
         self.client = client
@@ -135,6 +164,9 @@ class BaseInWorker(BaseWorker):
 
     async def connect_in(self, state, handle_ringing=True, handle_answer=True):
             pre_delay = self.call.delay.pre
+            if self.call.check_callerid:
+                if not nr_check(self.call.src.number, state.channel.caller['number'], self.client._calltest_config.asterisk.dialplan):
+                    raise WrongCallerID(self.call.src.number, state.channel.caller['number'])
             await anyio.sleep(pre_delay)
             if handle_ringing:
                 ring_delay = self.call.delay.ring
@@ -146,6 +178,7 @@ class BaseInWorker(BaseWorker):
                 await wait_answered(state)
                 await anyio.sleep(answer_delay)
 
+    
 class _InCall:
     _in_scope = None
     _in_channel = None
