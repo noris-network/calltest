@@ -278,7 +278,7 @@ Some parameters in the ``asterisk`` section require further elucidation.
 
 * app: 
 
-* audio: the (base of) the "sound" URL which Asterisk will use to find your
+* audio: (the base of) the "sound" URL which Asterisk will use to find your
   test's outgoing sound files. Should be ``sound:/some/absolute/path``.
 
 Test setup
