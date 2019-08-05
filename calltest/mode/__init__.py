@@ -133,7 +133,7 @@ class BaseWorker:
             async with Channel.new(self.client) as c:
                 try:
                     cs = ChannelState(c)
-                    async with cs:
+                    async with cs.task:
                         yield cs
                 finally:
                     async with anyio.open_cancel_scope(shield=True):
@@ -233,7 +233,7 @@ class _InCall:
             state_factory = self.state_factory
         ics = state_factory(self._in_channel)
         self.worker.in_logger.debug("Wait for call: %r", ics)
-        async with ics:
+        async with ics.task:
             yield ics
 
     async def __aexit__(self, *tb):
