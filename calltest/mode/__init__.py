@@ -178,6 +178,21 @@ class BaseInWorker(BaseWorker):
                 await wait_answered(state)
                 await anyio.sleep(answer_delay)
 
+    async def url_open(self, dest_nr, url):
+        import asks
+        if isinstance(url, str):
+            url = {"url": url}
+        method = url.get("method","GET")
+        query = url.get("query","")
+        body = url.get("query","")
+        url = url['url']
+
+        url = url.replace('{nr}', dest_nr)
+        query = query.replace('{nr}', dest_nr)
+        body = body.replace('{nr}', dest_nr)
+
+        res = await asks.request(method, url=url, *, path=query, data=body)
+        return res
     
 class _InCall:
     _in_scope = None
@@ -197,6 +212,9 @@ class _InCall:
             self.worker.in_logger.debug("Wait for call: using %s", w.call.dst.name)
             async with w.client.on_start_of(w.call.dst.name) as d:
                 await evt.set()
+                url = w.call.dst.get['url']
+                if url is not None:
+                    self.worker.client.taskgroup.spawn(url_open, w.call.dst.number, url):
                 async for ic_, evt_ in d:
                     if self._in_channel is None:
                         self._in_channel = ic_['channel']

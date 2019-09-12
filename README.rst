@@ -76,6 +76,15 @@ Calls
 * url: for answer-only modes, you need a way to cause a call. For now this
   is done by fetching the data at this URL.
 
+  This field may either be a simple URL, or a dictionary with these attributes:
+
+  * url
+  * method (GET POST PUT)
+  * query
+  * body
+
+  `query` and `body` may contain a ``{nr}`` substitution.
+
 * check_callerid: set to ``false`` to disable Caller ID verification.
 
 The ':default:' values are applied to all other entries (unless overridden),
