@@ -1,0 +1,8 @@
+#!/bin/bash
+
+addgroup --system voice
+adduser --system --ingroup voice --home /var/spool/calltest --disabled-login calltest
+mkdir -p /etc/voice
+test -f /etc/voice/calltest.cfg || calltest dumpcfg > /etc/voice/calltest.cfg
+chgrp voice /etc/voice/calltest.cfg
+

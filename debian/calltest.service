@@ -22,3 +22,5 @@ ExecStart=/usr/bin/calltest -c /etc/calltest.cfg server
 TimeoutSec=20
 RemainAfterExit=no
 GuessMainPID=no
+User=calltest
+Group=voice
