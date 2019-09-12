@@ -1,4 +1,6 @@
-# DTMF: exchange calls, 
+"""
+Incoming call that records its audio until the originator hangs up.
+"""
 
 import anyio
 

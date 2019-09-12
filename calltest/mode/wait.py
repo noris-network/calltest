@@ -1,4 +1,6 @@
-# DTMF: exchange calls, 
+"""
+Incoming call that waits until it's ringing, then hangs up.
+"""
 
 import anyio
 

@@ -1,4 +1,12 @@
-# DTMF: exchange calls, 
+"""
+Play audio files to each other.
+
+The caller records until the callee has played their audio file.
+Then, the callee records until the caller has played their audio file.
+Then, both hang up.
+
+Synchronization is done in code, not via the phone call.
+"""
 
 import anyio
 

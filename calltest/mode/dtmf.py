@@ -1,4 +1,11 @@
-# DTMF: exchange calls, 
+"""
+Exchange DTMF signalling.
+
+Caller and receiver each select a random DTMF sequence whcih they send to
+the other side.
+
+The callee sends first.
+"""
 
 import anyio
 

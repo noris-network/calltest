@@ -1,4 +1,8 @@
-# DTMF: exchange calls, 
+"""
+Do a simple phone call.
+
+This waits until both sides get signalled that the call is up.
+"""
 
 import anyio
 

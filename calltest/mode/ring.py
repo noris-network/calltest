@@ -1,4 +1,6 @@
-# DTMF: exchange calls, 
+"""
+Outgoing call that simply rings the other side, then hangs up.
+"""
 
 import anyio
 

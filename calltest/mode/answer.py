@@ -1,5 +1,10 @@
-# DTMF: exchange calls, 
+"""
+Answer-only mode. Accepts a sound file to play, plus optionally a file to
+record to while playing.
 
+The call ends / recording stops when the outgoing audio ends, or
+immediately if there is no outgoing audio.
+"""
 import anyio
 
 from . import BaseInWorker

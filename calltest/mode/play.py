@@ -1,4 +1,6 @@
-# DTMF: exchange calls, 
+"""
+Outgoing call that plays a sound file, then ends the call.
+"""
 
 import anyio
 
