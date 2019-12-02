@@ -194,6 +194,11 @@ class BaseInWorker(BaseWorker):
         res = await asks.request(method, url=url, path=query, data=body)
         return res
     
+    async def exec_open(self, dest_nr, args):
+        import trio
+        args = [x.replace("{nr}",dest_nr) for x in args]
+        await trio.run_process(args)
+
 class _InCall:
     _in_scope = None
     _in_channel = None
@@ -212,9 +217,12 @@ class _InCall:
             self.worker.in_logger.debug("Wait for call: using %s", w.call.dst.name)
             async with w.client.on_start_of(w.call.dst.name) as d:
                 await evt.set()
-                url = w.call.dst.get['url']
+                url = getattr(w.call,'url', None)
                 if url is not None:
-                    self.worker.client.taskgroup.spawn(url_open, w.call.dst.number, url):
+                    await self.worker.client.taskgroup.spawn(w.url_open, w.call.dst.number, url)
+                args = getattr(w.call,'exec', None)
+                if args is not None:
+                    await self.worker.client.taskgroup.spawn(w.exec_open, w.call.dst.number, args)
                 async for ic_, evt_ in d:
                     if self._in_channel is None:
                         self._in_channel = ic_['channel']
