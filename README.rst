@@ -19,10 +19,10 @@ The configuration is a YAML file and basically looks like this::
 
     links: 
       foo:
-        channel: "SIP/foo/{nr}"
+        channel: "SIP/foo/{number}"
         number: "+49123456789"
       bar:
-        channel: "SIP/bar/{nr}"
+        channel: "SIP/bar/{number}"
         number: "+49987654321"
 
     calls:
@@ -45,7 +45,7 @@ Links
 
 These parameters are used when originating a call on the link:
 
-* channel: The dial string used to call out on this channel. ``{nr}`` is a
+* channel: The dial string used to call out on this channel. ``{number}`` is a
   placeholder for the destination phone number.
 
 These parameters are used when answering a call:
@@ -83,7 +83,7 @@ Calls
   * query
   * body
 
-  `query` and `body` may contain a ``{nr}`` substitution.
+  `query` and `body` may contain a ``{number}`` substitution.
 
 * check_callerid: set to ``false`` to disable Caller ID verification.
 
@@ -213,7 +213,7 @@ For instance, if you need to drop the '+', use this macro::
         _+! => Dial(SIP/broken/${EXTEN:1});
     }
 
-and then call ``Local/{nr}@mangle``. As another example, if you need to use
+and then call ``Local/{number}@mangle``. As another example, if you need to use
 lcoal number format to dial out::
 
     context mangle {
@@ -297,7 +297,7 @@ Asterisk needs to know how to direct incoming calls to the tester. This is
 typically done with a Stasis macro. This is for ``extensions.ael``::
 
     macro calltest(link,nr) {
-        Stasis(calltest,${link},${nr});
+        Stasis(calltest,${link},${number});
         Hangup();
         return;
     }
@@ -350,7 +350,7 @@ This package contains an ``example.cfg`` configuration. To use it, your
 ``asterisk.ael`` file should contain these lines::
 
     macro calltest(link, nr) {
-        Stasis(calltest,${link},${nr});
+        Stasis(calltest,${link},${number});
         Hangup();
         return;
     }

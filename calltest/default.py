@@ -117,6 +117,7 @@ CFG = attrdict(
             ),
             "src": None,   # link. Must be missing for answer tests.
             "dst": None,   # link. Must be missing for originate tests.
+            "number": None, # specific dest to call
             "mode": "dtmf",   # see below
             "timeout": 30, # seconds
             "info": "-", # short documentation

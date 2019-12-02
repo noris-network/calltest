@@ -22,6 +22,9 @@ async def wait_answered(chan_state):
 async def wait_ringing(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state in {"Up", "Ringing", "Ring"})
 
+class ConfigError(RuntimeError):
+    pass
+
 class WrongCallerID(ValueError):
     pass
 
@@ -187,16 +190,18 @@ class BaseInWorker(BaseWorker):
         body = url.get("query","")
         url = url['url']
 
-        url = url.replace('{nr}', dest_nr)
-        query = query.replace('{nr}', dest_nr)
-        body = body.replace('{nr}', dest_nr)
+        url = url.replace('{number}', dest_nr)
+        query = query.replace('{number}', dest_nr)
+        body = body.replace('{number}', dest_nr)
 
+        self.in_logger.info("URL %s %s p=%s d=%s",method,url,query,body)
         res = await asks.request(method, url=url, path=query, data=body)
         return res
     
     async def exec_open(self, dest_nr, args):
         import trio
-        args = [x.replace("{nr}",dest_nr) for x in args]
+        args = [x.replace("{number}",dest_nr) for x in args]
+        self.in_logger.info("Exec %s",args)
         await trio.run_process(args)
 
 class _InCall:
@@ -212,6 +217,7 @@ class _InCall:
 
     async def _listen(self, evt):
         w = self.worker
+        number = w.call.number or w.call.dst.number
         async with anyio.open_cancel_scope() as sc:
             self._in_scope = sc
             self.worker.in_logger.debug("Wait for call: using %s", w.call.dst.name)
@@ -219,10 +225,10 @@ class _InCall:
                 await evt.set()
                 url = getattr(w.call,'url', None)
                 if url is not None:
-                    await self.worker.client.taskgroup.spawn(w.url_open, w.call.dst.number, url)
+                    await self.worker.client.taskgroup.spawn(w.url_open, number, url)
                 args = getattr(w.call,'exec', None)
                 if args is not None:
-                    await self.worker.client.taskgroup.spawn(w.exec_open, w.call.dst.number, args)
+                    await self.worker.client.taskgroup.spawn(w.exec_open, number, args)
                 async for ic_, evt_ in d:
                     if self._in_channel is None:
                         self._in_channel = ic_['channel']
@@ -282,6 +288,8 @@ class _InCall:
 class BaseOutWorker(BaseWorker):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        if self.call.src is None:
+            raise ConfigError("Config %s doesn't have 'src'" % (self.call.name,))
         self.out_logger = logging.getLogger("%s.out.%s" % (__name__, self.call.src.name))
 
     @property
@@ -295,7 +303,7 @@ class BaseOutWorker(BaseWorker):
         outgoing call.
 
         :param dest_nr: Number to call. Optional, defaults to the call's
-                        destination number.
+                        destination number or to the destination's configured number.
         :param state_factory: The ChannelState subclass to be instantiated
                               with this call. Defaults to ChannelState.
 
@@ -308,13 +316,13 @@ class BaseOutWorker(BaseWorker):
         """
         ep = self.call.src.channel
         if dest_nr is None and self.call.dst is not None:
-            dest_nr = self.call.dst.number
+            dest_nr = self.call.number or self.call.dst.number
         if dest_nr is None:
-            if '{nr}' in ep:
+            if '{number}' in ep:
                 raise ValueError("Need a destination (for the number)")
             dest_nr=""
         else:
-            ep = ep.replace('{nr}', dest_nr)
+            ep = ep.replace('{number}', dest_nr)
         oc = None
         self.out_logger.debug("Calling %s", ep)
 
@@ -333,11 +341,12 @@ class BaseOutWorker(BaseWorker):
                     'CONNECTEDLINE(name)': src_name, 'CONNECTEDLINE(num)': src_number,}
             chan_id = self.client.generate_id("C")
             oc = Channel(self.client, id=chan_id)
-            async with state_factory(oc) as ocs:
-                await self.client.channels.originateWithId(channelId=chan_id, endpoint=ep, app=self.client._app,
+            ocs = state_factory(oc)
+            await ocs.start_task()
+            await self.client.channels.originateWithId(channelId=chan_id, endpoint=ep, app=self.client._app,
                     appArgs=[":dialed",dest_nr], variables=vars, callerId=src_cid)
-                self.out_logger.debug("Call placed: %r", ocs)
-                yield ocs
+            self.out_logger.debug("Call placed: %r", ocs)
+            yield ocs
         finally:
             async with anyio.open_cancel_scope(shield=True):
                 self.out_logger.debug("Hang up %r", oc)

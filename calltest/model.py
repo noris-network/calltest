@@ -84,6 +84,7 @@ class Call:
         self.dst = links[dst] if dst is not None else None
         self.info = info
         self.timeout = timeout
+        self.state.t_start=time.time()
         for k,v in kw.items():
             setattr(self,k,v)
         self.lock = anyio.create_lock()
