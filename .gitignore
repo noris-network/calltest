@@ -1,3 +1,6 @@
 __pycache__/
 test.log
 /.pybuild/
+/.eggs/
+/build/
+/*.egg-info/
