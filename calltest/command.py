@@ -64,7 +64,7 @@ def cmd():
 @click.option(
     "-q", "--quiet", count=True, help="Disable debugging. Opposite of '--verbose'."
 )
-@click.option("-c", "--cfg", type=click.File("r"), default="/etc/voice/calltest.cfg", help="Configuration file (YAML).")
+@click.option("-c", "--cfg", type=str, default=None, help="Configuration file (YAML).")
 @click.option("-C", "--conf", multiple=True, help="Override a config entry. Example: '-C server.bind_default.port=57586'")
 @click.pass_context
 async def main(ctx, verbose, quiet, log, cfg, conf):
@@ -76,8 +76,17 @@ async def main(ctx, verbose, quiet, log, cfg, conf):
     """
     ctx.ensure_object(attrdict)
     ctx.obj.debug = max(verbose - quiet + 1, 0)
+    DEF = "/etc/voice/calltest.cfg"
     
-    if cfg and cfg != "-":
+    if cfg is None:
+        if os.path.exists(DEF):
+            cfg = open(DEF,"r")
+    elif cfg == "-":
+        cfg = None
+    else:
+        cfg = open(cfg,"r")
+
+    if cfg:
         logger.debug("Loading %s", cfg)
         import yaml
 
