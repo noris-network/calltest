@@ -191,7 +191,7 @@ class BaseInWorker(BaseWorker):
         query = query.replace('{nr}', dest_nr)
         body = body.replace('{nr}', dest_nr)
 
-        res = await asks.request(method, url=url, *, path=query, data=body)
+        res = await asks.request(method, url=url, path=query, data=body)
         return res
     
 class _InCall:
