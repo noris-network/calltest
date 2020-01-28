@@ -237,12 +237,10 @@ class _InCall:
                         raise RuntimeError("Another incoming call", w.call.dst.name)
 
     async def __aenter__(self):
-        self.worker.in_logger.debug("Wait for call: starting")
         self._evt = anyio.create_event()
         evt = anyio.create_event()
         await self.worker.client.taskgroup.spawn(self._listen, evt)
         await evt.wait()
-        self.worker.in_logger.debug("Wait for call: registered")
         if self.delayed:
             return self
 
