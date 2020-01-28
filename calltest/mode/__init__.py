@@ -168,7 +168,9 @@ class BaseInWorker(BaseWorker):
     async def connect_in(self, state, handle_ringing=True, handle_answer=True):
             pre_delay = self.call.delay.pre
             if self.call.check_callerid:
-                if not nr_check(self.call.src.number, state.channel.caller['number'], self.client._calltest_config.asterisk.dialplan):
+                if self.call.src is None:
+                    self.in_logger.error("No source set: cannot check caller ID")
+                elif not nr_check(self.call.src.number, state.channel.caller['number'], self.client._calltest_config.asterisk.dialplan):
                     raise WrongCallerID(self.call.src.number, state.channel.caller['number'])
             await anyio.sleep(pre_delay)
             if handle_ringing:
