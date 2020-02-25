@@ -4,3 +4,4 @@ test.log
 /.eggs/
 /build/
 /*.egg-info/
+*.swp
