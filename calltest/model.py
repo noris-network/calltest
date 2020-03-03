@@ -152,7 +152,7 @@ class Call:
                             state.fail_map.append(True)
                         raise
                     except Exception as exc:
-                        state.exc = traceback.format_exc()
+                        state.exc = traceback.format_exc().split('\n')
                         state.n_fail += 1
                         state.fail_count += 1
                         state.fail_map.append(True)
