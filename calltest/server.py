@@ -28,8 +28,8 @@ async def run (  # type: ignore
     config.bind = [f"{host}:{port}"]
     config.ca_certs = ca_certs
     config.certfile = certfile
-    if debug is not None:
-        config.debug = debug
+#   if debug is not None:
+#       config.debug = debug
     config.error_logger = config.access_logger  # type: ignore
     config.keyfile = keyfile
     config.use_reloader = use_reloader
