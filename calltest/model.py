@@ -140,7 +140,7 @@ class Call:
         while True:
             await updated()
             if self._delay is not None or not self.test.skip:
-                with anyio.open_cancel_scope() as sc:
+                async with anyio.open_cancel_scope() as sc:
                     self.scope = sc
                     try:
                         await self(client)
