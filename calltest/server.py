@@ -120,4 +120,6 @@ async def serve(cfg, checks):
                 if c.test.skip:
                     continue
                 await tg.spawn(partial(c.run, client, updated=updated))
+            pass # end loop
+        pass # end taskgroup
 
