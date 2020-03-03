@@ -74,7 +74,7 @@ class Call:
     error = None
     err_count = 0
     state = attrdict(status="new", ct_wait=0, ct_run=0)
-    delay = None  # event for starting
+    _delay = None  # event for starting
     scope = None  # scope for stopping
 
     def __init__(self, links, name, *, timeout, mode="dtmf", info="-", src=None, dst=None, **kw):
@@ -139,7 +139,7 @@ class Call:
 
         while True:
             await updated()
-            if self.delay is not None or not self.test.skip:
+            if self._delay is not None or not self.test.skip:
                 with anyio.open_cancel_scope() as sc:
                     self.scope = sc
                     try:
@@ -168,9 +168,10 @@ class Call:
                             state.fail_map = []
                             # zero out after 20 successes in sequence
                         self.scope = None
+                        logger.warning("END %s",self.name)
 
             await updated()
-            self.delay = anyio.create_event()
+            self._delay = anyio.create_event()
             if self.test.skip:
                 dly = math.inf
             elif state.fail_count > 0:
@@ -178,15 +179,15 @@ class Call:
             else:
                 dly = self.test.repeat
             async with anyio.move_on_after(dly):
-                await self.delay.wait()
+                await self._delay.wait()
 
     async def test_start(self):
         """
         Start this test, either prematurely or at all.
         """
-        if self.delay is None or self.delay.is_set():
+        if self._delay is None or self._delay.is_set():
             return False
-        await self.delay.set()
+        await self._delay.set()
         return True
 
     async def test_stop(self, fail=True):
