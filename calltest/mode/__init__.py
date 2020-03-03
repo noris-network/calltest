@@ -243,6 +243,7 @@ class _InCall:
                         #raise IncomingCollisionError(w.call.dst.name, ic_, evt_)
 
     async def __aenter__(self):
+        self.worker.in_logger.debug("Enter InCall %s",self.worker.call.dst.name)
         self._evt = anyio.create_event()
         evt = anyio.create_event()
         await self.worker.client.taskgroup.spawn(self._listen, evt)
@@ -273,7 +274,7 @@ class _InCall:
             yield ics
 
     async def __aexit__(self, *tb):
-        self.worker.in_logger.debug("Wait for call: end")
+        self.worker.in_logger.debug("Exit InCall %s",self.worker.call.dst.name)
         async with anyio.open_cancel_scope(shield=True):
             if self._state is not None:
                 await self._state.done()
