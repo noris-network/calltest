@@ -276,19 +276,19 @@ class _InCall:
     async def __aexit__(self, *tb):
         self.worker.in_logger.debug("Exit InCall %s",self.worker.call.dst.name)
         async with anyio.open_cancel_scope(shield=True):
-            if self._state is not None:
-                await self._state.done()
-                self._state = None
-            if self._in_scope is not None:
-                await self._in_scope.cancel()
-                self._in_scope = None
-            if self._in_channel is not None:
-                self.worker.in_logger.debug("Hang up %r", self._in_channel)
-                try:
+            try:
+                if self._state is not None:
+                    await self._state.done()
+                    self._state = None
+                if self._in_scope is not None:
+                    await self._in_scope.cancel()
+                    self._in_scope = None
+                if self._in_channel is not None:
+                    self.worker.in_logger.debug("Hang up %r", self._in_channel)
                     with mayNotExist:
                         await self._in_channel.hangup()
-                finally:
-                    self._in_channel = None
+            finally:
+                self._in_channel = None
 
 class BaseOutWorker(BaseWorker):
     def __init__(self, *a, **kw):
