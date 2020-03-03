@@ -16,6 +16,9 @@ from calltest.model import locked_links
 import logging
 logger = logging.getLogger(__name__)
 
+class IncomingCollisionError(RuntimeError):
+    pass
+
 async def wait_answered(chan_state):
     await chan_state.channel.wait_for(lambda: chan_state.channel.state == "Up")
 
@@ -236,7 +239,8 @@ class _InCall:
                         self._in_channel = ic_['channel']
                         await self._evt.set()
                     else:
-                        raise RuntimeError("Another incoming call", w.call.dst.name)
+                        self.worker.in_logger.error("Duplicate incall on %s %s %s", w.call.dst.name, ic_, evt_)
+                        #raise IncomingCollisionError(w.call.dst.name, ic_, evt_)
 
     async def __aenter__(self):
         self._evt = anyio.create_event()
