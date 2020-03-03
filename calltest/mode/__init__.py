@@ -319,7 +319,7 @@ class BaseOutWorker(BaseWorker):
 
         """
         ep = self.call.src.channel
-        if dest_nr is None and self.call.dst is not None:
+        if dest_nr is None:
             dest_nr = self.call.number or self.call.dst.number
         if dest_nr is None:
             if '{number}' in ep:
