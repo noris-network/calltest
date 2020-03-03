@@ -65,6 +65,7 @@ async def serve(cfg, checks):
         return jsonify(s)
 
     async def alert(**msg):
+        nonlocal socks
         ds = set()
         for s in socks:
             try:
