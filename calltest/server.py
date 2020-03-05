@@ -14,7 +14,6 @@ async def run (  # type: ignore
     host: str = "127.0.0.1",
     port: int = 5000,
     debug: Optional[bool] = None,
-    use_reloader: bool = True,
     ca_certs: Optional[str] = None,
     certfile: Optional[str] = None,
     keyfile: Optional[str] = None,
@@ -32,7 +31,7 @@ async def run (  # type: ignore
 #       config.debug = debug
     config.error_logger = config.access_logger  # type: ignore
     config.keyfile = keyfile
-    config.use_reloader = use_reloader
+    config.use_reloader = False
 
     scheme = "http" if config.ssl_enabled is None else "https"
 
