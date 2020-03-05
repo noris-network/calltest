@@ -73,7 +73,6 @@ def gen_links(cfg):
 class Call:
     error = None
     err_count = 0
-    state = attrdict(status="new", ct_wait=0, ct_run=0)
     _delay = None  # event for starting
     scope = None  # scope for stopping
 
@@ -84,6 +83,7 @@ class Call:
         self.dst = links[dst] if dst is not None else None
         self.info = info
         self.timeout = timeout
+        self.state = attrdict(status="new", ct_wait=0, ct_run=0)
         self.state.t_start=time.time()
         for k,v in kw.items():
             setattr(self,k,v)
