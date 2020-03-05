@@ -251,10 +251,15 @@ class _InCall:
         if self.delayed:
             return self
 
-        await self._evt.wait()
-        self._state = self.state_factory(self._in_channel)
-        await self._state.start_task()
-        return self._state
+        try:
+            await self._evt.wait()
+            self._state = self.state_factory(self._in_channel)
+            await self._state.start_task()
+            return self._state
+        except BaseException:
+            if self._in_scope is not None:
+                await self._in_scope.cancel()
+            raise
 
     @asynccontextmanager
     async def get(self, state_factory=None):
