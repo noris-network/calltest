@@ -117,6 +117,7 @@ class Call:
         async with anyio.open_cancel_scope() as sc:
             self.scope = sc
             try:
+                logger.debug("START %s",self.name)
                 await self(client)
             except anyio.get_cancelled_exc_class():
                 state.exc = "Canceled"
@@ -142,7 +143,7 @@ class Call:
                     state.fail_map = []
                     # zero out after 20 successes in sequence
                 self.scope = None
-                logger.warning("END %s",self.name)
+                logger.debug("END %s",self.name)
 
     async def run(self, client, updated=None):
         """
