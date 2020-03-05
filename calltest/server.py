@@ -117,8 +117,6 @@ async def serve(cfg, checks):
         async with anyio.create_task_group() as tg:
             await tg.spawn(partial(run, app, **cfg.server, debug=True))
             for c in checks.values():
-                if c.test.skip:
-                    continue
                 await tg.spawn(partial(c.run, client, updated=updated))
             pass # end loop
         pass # end taskgroup
