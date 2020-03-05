@@ -112,6 +112,37 @@ class Call:
             self.state.t_stop=time.time()
             self.state.ct_run += self.state.t_stop-self.state.t_start
 
+    async def _run(self,client):
+        async with anyio.open_cancel_scope() as sc:
+            self.scope = sc
+            try:
+                await self(client)
+            except anyio.get_cancelled_exc_class():
+                state.exc = "Canceled"
+                if self.scope is not None:
+                    state.n_fail += 1
+                    state.fail_count += 1
+                    state.fail_map.append(True)
+                raise
+            except Exception as exc:
+                state.exc = traceback.format_exc().split('\n')
+                state.n_fail += 1
+                state.fail_count += 1
+                state.fail_map.append(True)
+            else:
+                state.fail_count = 0 
+                state.fail_map.append(False)
+            finally:
+                state.n_run += 1
+
+                if any(state.fail_map):
+                    del state.fail_map[:-20]
+                else:
+                    state.fail_map = []
+                    # zero out after 20 successes in sequence
+                self.scope = None
+                logger.warning("END %s",self.name)
+
     async def run(self, client, updated=None):
         """
         Background task runner for this test, stores exceptions.
@@ -137,49 +168,27 @@ class Call:
             "fail_count": 0,
         })
 
-        while True:
-            await updated()
-            if self._delay is not None or not self.test.skip:
-                async with anyio.open_cancel_scope() as sc:
-                    self.scope = sc
-                    try:
-                        await self(client)
-                    except anyio.get_cancelled_exc_class():
-                        state.exc = "Canceled"
-                        if self.scope is not None:
-                            state.n_fail += 1
-                            state.fail_count += 1
-                            state.fail_map.append(True)
-                        raise
-                    except Exception as exc:
-                        state.exc = traceback.format_exc().split('\n')
-                        state.n_fail += 1
-                        state.fail_count += 1
-                        state.fail_map.append(True)
-                    else:
-                        state.fail_count = 0 
-                        state.fail_map.append(False)
-                    finally:
-                        state.n_run += 1
-
-                        if any(state.fail_map):
-                            del state.fail_map[:-20]
-                        else:
-                            state.fail_map = []
-                            # zero out after 20 successes in sequence
-                        self.scope = None
-                        logger.warning("END %s",self.name)
-
-            await updated()
-            self._delay = anyio.create_event()
-            if self.test.skip:
-                dly = math.inf
-            elif state.fail_count > 0:
-                dly = self.test.retry
-            else:
-                dly = self.test.repeat
-            async with anyio.move_on_after(dly):
+        if self.test.skip:
+            # on demand only
+            while True:
+                await updated()
+                self._delay = anyio.create_event()
                 await self._delay.wait()
+                await updated()
+                await self._run(client)
+
+        else:
+            while True:
+                await updated()
+                await self._run(client)
+                await updated()
+                self._delay = anyio.create_event()
+                if state.fail_count > 0:
+                    dly = self.test.retry
+                else:
+                    dly = self.test.repeat
+                async with anyio.move_on_after(dly):
+                    await self._delay.wait()
 
     async def test_start(self):
         """
