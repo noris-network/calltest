@@ -113,6 +113,7 @@ class Call:
             self.state.ct_run += self.state.t_stop-self.state.t_start
 
     async def _run(self,client):
+        state = self.state
         async with anyio.open_cancel_scope() as sc:
             self.scope = sc
             try:
