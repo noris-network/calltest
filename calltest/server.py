@@ -105,7 +105,7 @@ async def serve(cfg, checks):
                 data = await sock.receive()
                 print("IN",data)
         finally:
-            socks.remove(sock)
+            socks.discard(sock)
 
     async def updated(call):
         await alert(action="update", name=call.name, state=call.state)
