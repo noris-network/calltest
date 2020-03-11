@@ -391,3 +391,36 @@ After doing all of this and restarting your Asterisk (reloading "ael",
 "http" and "res_ari" should work too), the command ``./ct -c example.cfg
 run`` should pass.
 
+
+Web service endpoints
+=====================
+
+
+* /
+
+  List state and failed tests.
+
+* /list
+
+  Like ``/`` but als lists successful tests.
+
+* /test/``name``
+
+  Status for this test.
+
+* /test/``name``/start (PUT)
+
+  Start this test.
+
+* /test/``name``/stop (PUT)
+
+  Interrupt this test.
+
+* /test/``name``/fail (PUT)
+
+  Interrupt this test, mark the run as failed.
+
+* /ws (web socket)
+
+  Monitors the tester. Input on the websocket is discarded.
+
