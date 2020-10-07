@@ -172,6 +172,9 @@ class Call:
             "last_exc": None,
             "fail_map": [], # last 20 or whatever
             "fail_count": 0,
+            "retry_after": self.test.retry,
+            "repeat_after": self.test.repeat,
+            "timeout": self.timeout,
         })
 
         if self.test.skip:
