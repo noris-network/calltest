@@ -105,7 +105,11 @@ class Call:
                 self.state.t_start=time.time()
                 self.state.ct_wait += self.state.t_start-self.state.t_wait
                 async with anyio.fail_after(self.timeout):
-                    await runner()
+                    try:
+                        await runner()
+                    except BaseException as exc:
+                        logger.exception("Oops %r", exc)
+                        raise
         finally:
             self.state.status="idle"
             self.state.running=False
