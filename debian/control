@@ -15,7 +15,7 @@ Build-Depends: dh-python, python3-setuptools, python3-all, debhelper (>= 9),
 Standards-Version: 3.9.6
 Homepage: https://github.com/smurfix/calltest
 
-Package: python3-calltest
+Package: calltest
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends},
   python3-asyncclick,
